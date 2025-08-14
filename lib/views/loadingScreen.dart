@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'Login.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,7 +10,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool checking = true; // Para mostrar que está verificando
+  bool checking = true;
 
   @override
   void initState() {
@@ -18,14 +19,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkInternetAndNavigate() async {
-    await Future.delayed(const Duration(seconds: 2)); // Tiempo del splash
+    await Future.delayed(const Duration(seconds: 2)); // Tiempo de splash
 
     bool hasInternet = await _hasInternetConnection();
 
     if (hasInternet) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const NextScreen()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } else {
       setState(() {
@@ -77,11 +78,9 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              '../../images/logo1.png', // Asegúrate de que la ruta sea correcta
+              'assets/images/Logo1.png',
               width: 200,
             ),
-            const SizedBox(height: 20),
-
             const SizedBox(height: 20),
             if (checking)
               const CircularProgressIndicator(color: Color(0xFF006D73)),
@@ -89,15 +88,5 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       ),
     );
-  }
-}
-
-// Pantalla de ejemplo para cuando haya internet
-class NextScreen extends StatelessWidget {
-  const NextScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('Pantalla principal')));
   }
 }

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "27.0.12077973" // Agrega esta línea
     namespace = "com.example.bless_health24"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
