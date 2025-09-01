@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../componentes/buttons/Button1.dart';
 import 'Registro.dart';
+import 'PrincipalPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,9 +23,43 @@ class _LoginPageState extends State<LoginPage> {
       loading = true;
     });
 
-    await Future.delayed(const Duration(seconds: 2)); // Simulación
-    print("Usuario: ${emailController.text}");
-    print("Contraseña: ${passwordController.text}");
+    try {
+      final uri = Uri.parse('http://10.0.2.2:3001/auth/iniciar-sesion');
+
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "correoUsuario": emailController.text.trim(),
+          "contrasenaUsuario": passwordController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("✅ Login exitoso: $data");
+
+        // Navegar a HomePage reemplazando LoginPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+        // Navigator.pushReplacement(...)
+      } else {
+        print("❌ Error: ${response.statusCode}");
+        print("Respuesta: ${response.body}");
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
+      }
+    } catch (e) {
+      print("⚠️ Error de conexión: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error de conexión con el servidor")),
+      );
+    }
 
     setState(() {
       loading = false;
@@ -51,22 +88,13 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
             child: Column(
               children: [
-                // Spacer para empujar el formulario hacia abajo
                 const Spacer(flex: 1),
-
-                // Contenedor del formulario centrado
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo
-                      Image.asset(
-                        'assets/images/Logo1.png',
-                        width: 120,
-                      ),
+                      Image.asset('assets/images/Logo1.png', width: 120),
                       const SizedBox(height: 40),
-
-                      // Correo
                       TextField(
                         controller: emailController,
                         decoration: const InputDecoration(
@@ -82,8 +110,6 @@ class _LoginPageState extends State<LoginPage> {
                         style: const TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 20),
-
-                      // Contraseña
                       TextField(
                         controller: passwordController,
                         obscureText: true,
@@ -102,11 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-
-                // Otro Spacer para empujar el botón de inicio de sesión
                 const Spacer(flex: 1),
-
-                // Botón de iniciar sesión
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -122,31 +144,29 @@ class _LoginPageState extends State<LoginPage> {
                     child: loading
                         ? const CircularProgressIndicator()
                         : const Text(
-                      "Iniciar Sesión",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                            "Iniciar Sesión",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Sección blanca con botón de registro
           Expanded(
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
-                child:
-                CustomButton(
+                child: CustomButton(
                   text: "REGISTRARSE",
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegistroPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const RegistroPage(),
+                      ),
                     );
                   },
                 ),
-
               ),
             ),
           ),

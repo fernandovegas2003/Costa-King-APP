@@ -13,10 +13,9 @@ class RegistroPage extends StatefulWidget {
 class _RegistroPageState extends State<RegistroPage> {
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController apellidoController = TextEditingController();
-  final TextEditingController fechaController = TextEditingController();
-  final TextEditingController tipoDocController = TextEditingController();
-  final TextEditingController numeroDocController = TextEditingController();
+  final TextEditingController correoController = TextEditingController();
   final TextEditingController contrasenaController = TextEditingController();
+  final TextEditingController confirmarContrasenaController = TextEditingController();
 
   bool loading = false;
 
@@ -26,14 +25,15 @@ class _RegistroPageState extends State<RegistroPage> {
     });
 
     try {
-      final url = Uri.parse("https://tu-backend.com/api/registro");
+      final url = Uri.parse("http://10.0.2.2:3001/auth/registrar");
+
       final body = {
         "nombre": nombreController.text,
         "apellido": apellidoController.text,
-        "fechaNacimiento": fechaController.text,
-        "tipoDocumento": tipoDocController.text,
-        "numeroDocumento": numeroDocController.text,
+        "correo": correoController.text,
         "contrasena": contrasenaController.text,
+        "confirmarContrasena": confirmarContrasenaController.text,
+        "rol": 1, // 🔹 Rol fijo por defecto
       };
 
       final response = await http.post(
@@ -43,13 +43,13 @@ class _RegistroPageState extends State<RegistroPage> {
       );
 
       if (response.statusCode == 200) {
-        print("Registro exitoso: ${response.body}");
+        print("✅ Registro exitoso: ${response.body}");
         Navigator.pop(context);
       } else {
-        print("Error en registro: ${response.statusCode} - ${response.body}");
+        print("❌ Error en registro: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
-      print("Error de conexión: $e");
+      print("⚠️ Error de conexión: $e");
     }
 
     setState(() {
@@ -93,13 +93,11 @@ class _RegistroPageState extends State<RegistroPage> {
                           const SizedBox(height: 10),
                           _buildTextField(apellidoController, "Apellidos"),
                           const SizedBox(height: 10),
-                          _buildTextField(fechaController, "Fecha de nacimiento"),
-                          const SizedBox(height: 10),
-                          _buildTextField(tipoDocController, "Tipo de documento"),
-                          const SizedBox(height: 10),
-                          _buildTextField(numeroDocController, "Número de documento"),
+                          _buildTextField(correoController, "Correo electrónico"),
                           const SizedBox(height: 10),
                           _buildTextField(contrasenaController, "Contraseña", obscure: true),
+                          const SizedBox(height: 10),
+                          _buildTextField(confirmarContrasenaController, "Confirmar contraseña", obscure: true),
                         ],
                       ),
                     ),
