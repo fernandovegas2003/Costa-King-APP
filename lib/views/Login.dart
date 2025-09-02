@@ -24,7 +24,9 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final uri = Uri.parse('http://10.0.2.2:3001/auth/iniciar-sesion');
+      // ✅ URL de la API en Render
+      final uri = Uri.parse(
+          'https://blesshealth24-7-backecommerce.onrender.com/auth/iniciar-sesion');
 
       final response = await http.post(
         uri,
@@ -46,7 +48,6 @@ class _LoginPageState extends State<LoginPage> {
             builder: (context) => const HomePage(),
           ),
         );
-        // Navigator.pushReplacement(...)
       } else {
         print("❌ Error: ${response.statusCode}");
         print("Respuesta: ${response.body}");
@@ -57,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       print("⚠️ Error de conexión: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error de conexión con el servidor")),
+        const SnackBar(content: Text("Error de conexión con el servidor")),
       );
     }
 
@@ -71,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Column(
         children: [
-          // Sección superior turquesa
+          // Sección superior con imagen de fondo
           Container(
             height: MediaQuery.of(context).size.height * 0.85,
             decoration: const BoxDecoration(
@@ -144,9 +145,9 @@ class _LoginPageState extends State<LoginPage> {
                     child: loading
                         ? const CircularProgressIndicator()
                         : const Text(
-                            "Iniciar Sesión",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                      "Iniciar Sesión",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

@@ -25,7 +25,8 @@ class _RegistroPageState extends State<RegistroPage> {
     });
 
     try {
-      final url = Uri.parse("http://10.0.2.2:3001/auth/registrar");
+      // ✅ Nueva URL del backend
+      final url = Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/auth/registrar");
 
       final body = {
         "nombre": nombreController.text,
@@ -33,7 +34,7 @@ class _RegistroPageState extends State<RegistroPage> {
         "correo": correoController.text,
         "contrasena": contrasenaController.text,
         "confirmarContrasena": confirmarContrasenaController.text,
-        "rol": 1, // 🔹 Rol fijo por defecto
+        "rol": 1, // Rol fijo por defecto
       };
 
       final response = await http.post(
@@ -44,12 +45,30 @@ class _RegistroPageState extends State<RegistroPage> {
 
       if (response.statusCode == 200) {
         print("✅ Registro exitoso: ${response.body}");
-        Navigator.pop(context);
+        if (mounted) {
+          Navigator.pop(context);
+        }
       } else {
         print("❌ Error en registro: ${response.statusCode} - ${response.body}");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error en el registro: ${response.body}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       print("⚠️ Error de conexión: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Error de conexión con el servidor"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     setState(() {
@@ -103,7 +122,7 @@ class _RegistroPageState extends State<RegistroPage> {
                     ),
                   ),
                 ),
-                // 🔹 Botón "Registrarse" pegado abajo
+                // 🔹 Botón "Registrarse"
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

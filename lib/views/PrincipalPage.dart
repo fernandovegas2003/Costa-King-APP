@@ -42,8 +42,9 @@ class _HomePageState extends State<HomePage> {
   /// 🔹 Trae todos los productos
   Future<void> fetchProductos() async {
     try {
-      final response = await http
-          .get(Uri.parse("http://10.0.2.2:3001/producto/obtenervitrina"));
+      final response = await http.get(
+        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/producto/obtenervitrina"),
+      );
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
@@ -67,8 +68,9 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      final response = await http
-          .get(Uri.parse("http://10.0.2.2:3001/producto/buscar/$query"));
+      final response = await http.get(
+        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/producto/buscar/$query"),
+      );
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
@@ -89,9 +91,10 @@ class _HomePageState extends State<HomePage> {
       // 🔹 Soporta tanto "imgProducto" como "imagenProducto"
       String rawImage = e["imgProducto"] ?? e["imagenProducto"] ?? "";
 
+      // 🔹 Reemplazar localhost con Render
       String fullImageUrl = rawImage.replaceFirst(
         "https://localhost:3000",
-        "http://10.0.2.2:3001",
+        "https://blesshealth24-7-backecommerce.onrender.com",
       );
 
       return {
@@ -104,7 +107,6 @@ class _HomePageState extends State<HomePage> {
       };
     }).toList();
   }
-
 
   @override
   void dispose() {
