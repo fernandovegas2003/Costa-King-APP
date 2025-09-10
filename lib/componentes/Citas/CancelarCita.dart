@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class CancelarCitaPage extends StatefulWidget {
   @override
@@ -18,14 +20,27 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
   }
 
   Future<void> fetchCitas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idPaciente = prefs.getInt("idPaciente");
+
+    if (idPaciente == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se encontró el usuario en sesión")),
+      );
+      setState(() => isLoading = false);
+      return;
+    }
+
     final response = await http.get(Uri.parse(
-        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/paciente/43"));
+      "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/paciente/$idPaciente",
+    ));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
-        // ✅ solo citas pendientes
-        citas = data["data"].where((cita) => cita["estado"] == "Pendiente").toList();
+        citas = data["data"]
+            .where((cita) => cita["estado"] == "Pendiente")
+            .toList();
         isLoading = false;
       });
     } else {
@@ -34,6 +49,7 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
       });
     }
   }
+
 
   Future<void> cancelarCita(int idCita, String motivo) async {
     final url = Uri.parse(

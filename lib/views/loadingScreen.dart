@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'Login.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -60,10 +60,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<bool> _hasInternetConnection() async {
     try {
-      final result = await InternetAddress.lookup(
-        'google.com',
-      ).timeout(const Duration(seconds: 3));
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      final response = await http
+          .get(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 3));
+      return response.statusCode == 200;
     } catch (_) {
       return false;
     }

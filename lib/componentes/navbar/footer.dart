@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Citas/PrincipalCitas.dart'; // Pantalla de citas
+import '../Citas/LoginCitas.dart'; // Pantalla de citas
 import '../../views/Noticias.dart';    // Pantalla de noticias
 import '../../views/PrincipalPage.dart'; // Pantalla principal
 
@@ -62,7 +62,7 @@ class CustomFooterNav extends StatelessWidget {
         if (isCitas) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const MenuCitasPage()),
+            MaterialPageRoute(builder: (_) => const LoginPage()),
           );
         } else if (isNoticias) {
           Navigator.push(

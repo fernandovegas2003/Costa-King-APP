@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AgendarCitaPage extends StatefulWidget {
   const AgendarCitaPage({Key? key}) : super(key: key);
@@ -74,7 +75,7 @@ class _AgendarCitaPageState extends State<AgendarCitaPage> {
     }
   }
 
-  // 📌 Cargar médicos por especialidad y sede
+  // 📌 Cargar médicos
   Future<void> _cargarMedicos(int idEspecialidad) async {
     setState(() {
       _cargandoMedicos = true;
@@ -330,8 +331,12 @@ class _AgendarCitaFormPageState extends State<AgendarCitaFormPage> {
       _enviando = true;
     });
 
+    // 📌 Recuperamos idPaciente desde SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final idPaciente = prefs.getInt("idPaciente") ?? 43; // fallback en caso de error
+
     final body = {
-      "idPaciente": 43,
+      "idPaciente": idPaciente,
       "idServicio": widget.idServicio,
       "idSede": widget.idSede,
       "fechaHora": _fechaHora!

@@ -3,7 +3,6 @@ import '../Citas/AgendarCita.dart';
 import '../Citas/CancelarCita.dart';
 import '../Citas/VerCitas.dart';
 
-
 class MenuCitasPage extends StatelessWidget {
   const MenuCitasPage({Key? key}) : super(key: key);
 

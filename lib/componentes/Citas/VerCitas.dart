@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class VerCitasScreen extends StatefulWidget {
@@ -21,8 +22,19 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
 
   Future<void> _fetchCitas() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final idPaciente = prefs.getInt("idPaciente");
+
+      if (idPaciente == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se encontró el usuario en sesión")),
+        );
+        setState(() => _loading = false);
+        return;
+      }
+
       final response = await http.get(
-        Uri.parse("https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/paciente/43"),
+        Uri.parse("https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/paciente/$idPaciente"),
       );
 
       if (response.statusCode == 200) {
@@ -68,7 +80,7 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
           // 📌 Contenedor principal
           Column(
             children: [
-              const SizedBox(height: 160), // espacio arriba
+              const SizedBox(height: 160),
 
               Expanded(
                 child: Transform.translate(
@@ -116,7 +128,8 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
                                   fontSize: 16),
                             ),
                             subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               children: [
                                 Text("Médico: ${cita["nombreMedico"]}"),
                                 Text("Especialidad: ${cita["especialidad"]}"),
