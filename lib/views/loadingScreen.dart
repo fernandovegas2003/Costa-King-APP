@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (hasInternet) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const SintomasPage()),
+        MaterialPageRoute(builder: (_) => const ChatBotPage()),
       );
     } else {
       setState(() {
