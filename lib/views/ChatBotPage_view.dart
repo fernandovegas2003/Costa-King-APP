@@ -92,7 +92,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
             height: 200,
             width: double.infinity,
             child: Image.asset(
-              "assets/images/bg_top.png",
+              "assets/images/Fondo.png",
               fit: BoxFit.cover,
             ),
           ),
