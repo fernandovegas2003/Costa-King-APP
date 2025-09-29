@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../Citas/LoginCitas.dart'; // Pantalla de citas
 import '../../views/Noticias.dart';    // Pantalla de noticias
 import '../../views/PrincipalPage.dart'; // Pantalla principal
+import '../../views/ChatBotPage_view.dart';
 
 class CustomFooterNav extends StatelessWidget {
   final int currentIndex;
@@ -28,7 +29,13 @@ class CustomFooterNav extends StatelessWidget {
             0,
             isInicio: true, // 👈 ahora inicio también navega
           ),
-          _buildNavItem(context, Icons.category, "Categorias", 1),
+          _buildNavItem(
+            context,
+            Icons.chat,
+            "Chat",
+            1,
+            isChat: true,
+          ),
           _buildNavItem(
             context,
             Icons.article,
@@ -56,6 +63,8 @@ class CustomFooterNav extends StatelessWidget {
         bool isCitas = false,
         bool isNoticias = false,
         bool isInicio = false, // 👈 añadimos flag
+        bool isChat= false,
+
       }) {
     return GestureDetector(
       onTap: () {
@@ -63,6 +72,12 @@ class CustomFooterNav extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const LoginPage()),
+          );
+        }
+        else if (isChat) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatBotPage()),
           );
         } else if (isNoticias) {
           Navigator.push(

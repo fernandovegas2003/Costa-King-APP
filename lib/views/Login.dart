@@ -24,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // ✅ URL de la API en Render
       final uri = Uri.parse(
           'https://blesshealth24-7-backecommerce.onrender.com/auth/iniciar-sesion');
 
@@ -37,26 +36,40 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
+
+
+      //Version arreglada para mi profe Malu
+
+
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("✅ Login exitoso: $data");
 
-        // Navegar a HomePage reemplazando LoginPage
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomePage(),
-          ),
-        );
+        if (data["token"] != null &&
+            data["token"] != "NULL_TOKEN" &&
+            data["usuario"] != null &&
+            data["usuario"]["id"] != 0) {
+          print("Login exitoso: $data");
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else {
+          print("Error esas no son las credenciales: $data");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Correo o contraseña incorrectos")),
+          );
+        }
       } else {
-        print("❌ Error: ${response.statusCode}");
+        print("Error: ${response.statusCode}");
         print("Respuesta: ${response.body}");
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${response.body}")),
+        );
       }
     } catch (e) {
-      print("⚠️ Error de conexión: $e");
+      print("Error de conexión: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error de conexión con el servidor")),
       );
@@ -72,7 +85,6 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Column(
         children: [
-          // Sección superior con imagen de fondo
           Container(
             height: MediaQuery.of(context).size.height * 0.85,
             decoration: const BoxDecoration(

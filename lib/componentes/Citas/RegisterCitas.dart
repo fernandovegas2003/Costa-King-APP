@@ -21,11 +21,23 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _telefonoController = TextEditingController();
   final TextEditingController _direccionController = TextEditingController();
   final TextEditingController _fechaNacController = TextEditingController();
-  final TextEditingController _generoController = TextEditingController(text: "F");
-  final TextEditingController _rolController = TextEditingController(text: "1");
-  final TextEditingController _sedeController = TextEditingController(text: "1");
+  final TextEditingController _generoController = TextEditingController(text: "M");
 
+  int _sedeSeleccionada = 1; // Por defecto Bogotá
   bool _isLoading = false;
+
+  final List<Map<String, dynamic>> _sedes = [
+    {"id": 1, "nombre": "BlessHealth24/7 Bogotá"},
+    {"id": 2, "nombre": "BlessHealth24/7 Medellín"},
+    {"id": 3, "nombre": "BlessHealth24/7 Cali"},
+    {"id": 4, "nombre": "BlessHealth24/7 Barranquilla"},
+    {"id": 5, "nombre": "BlessHealth24/7 Cartagena"},
+    {"id": 6, "nombre": "BlessHealth24/7 Bucaramanga"},
+    {"id": 7, "nombre": "BlessHealth24/7 Pereira"},
+    {"id": 8, "nombre": "BlessHealth24/7 Manizales"},
+    {"id": 9, "nombre": "BlessHealth24/7 Cúcuta"},
+    {"id": 10, "nombre": "BlessHealth24/7 Ibagué"},
+  ];
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -33,7 +45,8 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     final url = Uri.parse(
-        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/auth/register");
+      "https://blesshealth247-backgestionusuarios.westus3.cloudapp.azure.com/api/users",
+    );
 
     try {
       final response = await http.post(
@@ -45,13 +58,13 @@ class _RegisterPageState extends State<RegisterPage> {
           "nombreUsuario": _nombreController.text.trim(),
           "apellidoUsuario": _apellidoController.text.trim(),
           "emailUsuario": _emailController.text.trim(),
-          "pwdUsuario": _pwdController.text.trim(),
+          "password": _pwdController.text.trim(),
           "telefonoUsuario": _telefonoController.text.trim(),
           "direccionUsuario": _direccionController.text.trim(),
+          "idRol": 1, // 👈 Siempre fijo
+          "idSede": _sedeSeleccionada,
           "fechaNacimiento": _fechaNacController.text.trim(), // formato yyyy-MM-dd
           "genero": _generoController.text.trim(),
-          "idRol": int.parse(_rolController.text),
-          "idSede": int.parse(_sedeController.text),
         }),
       );
 
@@ -70,7 +83,6 @@ class _RegisterPageState extends State<RegisterPage> {
           );
         }
       } else {
-        // 📌 Aquí mostramos el error detallado del backend
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("❌ Error ${response.statusCode}: ${response.body}")),
         );
@@ -82,7 +94,6 @@ class _RegisterPageState extends State<RegisterPage> {
       );
     }
   }
-
 
   Widget _botonRegistro(String texto) {
     return ElevatedButton(
@@ -143,7 +154,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             color: Colors.black87),
                       ),
                       const SizedBox(height: 20),
-
                       TextField(
                         controller: _numDocController,
                         decoration: const InputDecoration(
@@ -206,6 +216,23 @@ class _RegisterPageState extends State<RegisterPage> {
                         decoration: const InputDecoration(
                           labelText: "Fecha de Nacimiento (YYYY-MM-DD)",
                           prefixIcon: Icon(Icons.calendar_today),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<int>(
+                        value: _sedeSeleccionada,
+                        items: _sedes
+                            .map((sede) => DropdownMenuItem<int>(
+                          value: sede["id"],
+                          child: Text(sede["nombre"]),
+                        ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() => _sedeSeleccionada = value ?? 1);
+                        },
+                        decoration: const InputDecoration(
+                          labelText: "Seleccione la sede",
+                          prefixIcon: Icon(Icons.location_city),
                         ),
                       ),
                       const SizedBox(height: 20),
