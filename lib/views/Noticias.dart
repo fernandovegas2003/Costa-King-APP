@@ -18,46 +18,93 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool _showNavbar = true;
-  int _selectedIndex = 2; // 👈 para que quede en "Noticias"
+  int _selectedIndex = 2;
 
-  List<Map<String, dynamic>> _noticias = [];
+  // Versículo
+  Map<String, dynamic> _versiculo = {};
+
+  // Noticias por fuente
+  Map<String, List<Map<String, dynamic>>> _noticiasPorFuente = {
+    "El Tiempo": [],
+    "La Nación": [],
+  };
+
+  // Filtro por fuente
+  String _filtroFuente = "Todas";
+  final List<String> _fuentes = ["Todas", "El Tiempo", "La Nación"];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
+    fetchVersiculo();
     fetchNoticias();
   }
 
   void _handleScroll() {
-    if (_scrollController.position.userScrollDirection ==
-        ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
       if (_showNavbar) setState(() => _showNavbar = false);
-    } else if (_scrollController.position.userScrollDirection ==
-        ScrollDirection.forward) {
+    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
       if (!_showNavbar) setState(() => _showNavbar = true);
     }
   }
 
-  /// 🔹 Traer noticias desde la API
-  Future<void> fetchNoticias() async {
+  /// Traer versículo
+  Future<void> fetchVersiculo() async {
     try {
       final response = await http.get(
-        Uri.parse("https://api-noticias-lecturas.onrender.com/eltiempo"),
+        Uri.parse("https://api-noticias-lecturas.onrender.com/versiculo-aleatorio"),
       );
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
         setState(() {
-          _noticias = List<Map<String, dynamic>>.from(data["noticias"]);
+          _versiculo = data; // 👈 directo, no "versiculo_principal"
         });
       } else {
-        print("❌ Error fetchNoticias: ${response.statusCode}");
+        print("❌ Error fetchVersiculo: ${response.statusCode}");
       }
+    } catch (e) {
+      print("❌ Error fetchVersiculo: $e");
+    }
+  }
+
+  /// Traer noticias
+  Future<void> fetchNoticias() async {
+    try {
+      final tiempoRes = await http.get(
+        Uri.parse("https://api-noticias-lecturas.onrender.com/eltiempo"),
+      );
+      final nacionRes = await http.get(
+        Uri.parse("https://api-noticias-lecturas.onrender.com/lanacion"),
+      );
+
+      if (tiempoRes.statusCode == 200) {
+        final data = json.decode(tiempoRes.body);
+        _noticiasPorFuente["El Tiempo"] =
+        List<Map<String, dynamic>>.from(data["noticias"]);
+      }
+      if (nacionRes.statusCode == 200) {
+        final data = json.decode(nacionRes.body);
+        _noticiasPorFuente["La Nación"] =
+        List<Map<String, dynamic>>.from(data["noticias"]);
+      }
+
+      setState(() {});
     } catch (e) {
       print("❌ Error fetchNoticias: $e");
     }
+  }
+
+  /// Aplica el filtro
+  List<Map<String, dynamic>> _filtrarNoticias(List<Map<String, dynamic>> noticias) {
+    List<Map<String, dynamic>> filtradas = noticias;
+
+    // Filtro por fuente
+    if (_filtroFuente != "Todas") {
+      filtradas = filtradas.where((n) => n["fuente"] == _filtroFuente).toList();
+    }
+
+    return filtradas;
   }
 
   Future<void> _launchUrl(String url) async {
@@ -65,6 +112,79 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw Exception('No se pudo abrir $url');
     }
+  }
+
+  Widget _buildNoticiasList(List<Map<String, dynamic>> noticias) {
+    final filtradas = _filtrarNoticias(noticias);
+
+    if (filtradas.isEmpty) {
+      return const Center(
+        child: Text("No hay noticias disponibles"),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      itemCount: filtradas.length,
+      itemBuilder: (context, index) {
+        final noticia = filtradas[index];
+
+        return GestureDetector(
+          onTap: () => _launchUrl(noticia["enlace"]),
+          child: Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 16, left: 8, right: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
+                  child: Image.network(
+                    noticia["imagen"],
+                    height: 100,
+                    width: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          noticia["titulo"],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "${noticia["fecha"]} - ${noticia["fuente"]}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -86,94 +206,96 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
               child: const CustomNavbar(),
             ),
 
-            // 🔹 Contenido scrollable (lista de noticias)
+            // Contenido scrollable
             Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "📰 Últimas Noticias",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+              child: Column(
+                children: [
+                  // 🔹 Versículo
+                  if (_versiculo.isNotEmpty)
+                    Card(
+                      color: Colors.indigo.shade50,
+                      margin: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Lista de noticias
-                      ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: _noticias.length,
-                        itemBuilder: (context, index) {
-                          final noticia = _noticias[index];
-
-                          return GestureDetector(
-                            onTap: () => _launchUrl(noticia["enlace"]),
-                            child: Card(
-                              elevation: 3,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(16),
-                                      bottomLeft: Radius.circular(16),
-                                    ),
-                                    child: Image.network(
-                                      noticia["imagen"],
-                                      height: 100,
-                                      width: 100,
-                                      fit: BoxFit.cover,
-                                    ),
+                      elevation: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.book, color: Colors.indigo),
+                                SizedBox(width: 8),
+                                Text(
+                                  "📖 Versículo del día",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.indigo,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            noticia["titulo"],
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            "${noticia["fecha"]} - ${noticia["fuente"]}",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _versiculo["texto"] ?? "",
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
-                          );
-                        },
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                _versiculo["referencia"] ?? "",
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
+
+                  // 🔹 Filtros (ChoiceChip)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: _fuentes.map((fuente) {
+                        final isSelected = _filtroFuente == fuente;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: ChoiceChip(
+                            label: Text(fuente),
+                            selected: isSelected,
+                            selectedColor: Colors.indigo,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            onSelected: (_) {
+                              setState(() => _filtroFuente = fuente);
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
+
+                  // 🔹 Lista de noticias (mezcladas)
+                  Expanded(
+                    child: _buildNoticiasList([
+                      ...?_noticiasPorFuente["El Tiempo"],
+                      ...?_noticiasPorFuente["La Nación"],
+                    ]),
+                  ),
+                ],
               ),
             ),
           ],
