@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../componentes/navbar/navbar.dart';
 import '../componentes/navbar/footer.dart';
+import '../views/ViewMed.dart'; // 👈 importa la nueva vista
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    fetchProductos(); // al iniciar carga todos
+    fetchProductos();
   }
 
   void _handleScroll() {
@@ -43,12 +44,12 @@ class _HomePageState extends State<HomePage> {
   Future<void> fetchProductos() async {
     try {
       final response = await http.get(
-        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/producto/obtenervitrina"),
+        Uri.parse(
+            "https://blesshealth24-7-backecommerce.onrender.com/producto/obtenervitrina"),
       );
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
-
         setState(() {
           _productos = _mapearProductos(data);
         });
@@ -63,18 +64,18 @@ class _HomePageState extends State<HomePage> {
   /// 🔹 Buscar productos
   Future<void> buscarProductos(String query) async {
     if (query.isEmpty) {
-      fetchProductos(); // si no hay búsqueda, traer todos
+      fetchProductos();
       return;
     }
 
     try {
       final response = await http.get(
-        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/producto/buscar/$query"),
+        Uri.parse(
+            "https://blesshealth24-7-backecommerce.onrender.com/producto/buscar/$query"),
       );
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
-
         setState(() {
           _productos = _mapearProductos(data);
         });
@@ -88,10 +89,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> _mapearProductos(List data) {
     return data.map((e) {
-      // 🔹 Soporta tanto "imgProducto" como "imagenProducto"
       String rawImage = e["imgProducto"] ?? e["imagenProducto"] ?? "";
-
-      // 🔹 Reemplazar localhost con Render
       String fullImageUrl = rawImage.replaceFirst(
         "https://localhost:3000",
         "https://blesshealth24-7-backecommerce.onrender.com",
@@ -103,7 +101,7 @@ class _HomePageState extends State<HomePage> {
         "precio": e["precioProducto"] ?? "",
         "stock": e["stockProducto"] ?? 0,
         "imagen": fullImageUrl,
-        "promo": e["enPromocion"].toString(), // lo paso a string para mostrar
+        "promo": e["enPromocion"].toString(),
       };
     }).toList();
   }
@@ -121,7 +119,6 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Navbar animado
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               height: _showNavbar ? null : 0,
@@ -151,9 +148,7 @@ class _HomePageState extends State<HomePage> {
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onChanged: (value) {
-                    buscarProductos(value);
-                  },
+                  onChanged: (value) => buscarProductos(value),
                 ),
               ),
             ),
@@ -169,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                     shrinkWrap: true,
                     gridDelegate:
                     const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 columnas
+                      crossAxisCount: 2,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
                       childAspectRatio: 0.65,
@@ -183,11 +178,15 @@ class _HomePageState extends State<HomePage> {
                         title: producto["nombre"],
                         description: producto["promo"],
                         price: producto["precio"].toString(),
-                        onAdd: () {
-                          print("🛒 Agregado: ${producto["nombre"]}");
-                        },
-                        onFavorite: () {
-                          print("❤️ Favorito: ${producto["nombre"]}");
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductoDetallePage(
+                                idProducto: producto["id"],
+                              ),
+                            ),
+                          );
                         },
                       );
                     },
@@ -199,13 +198,10 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // Footer
       bottomNavigationBar: SafeArea(
         child: CustomFooterNav(
           currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() => _selectedIndex = index);
-          },
+          onTap: (index) => setState(() => _selectedIndex = index),
         ),
       ),
     );
@@ -218,8 +214,7 @@ class ProductCard extends StatelessWidget {
   final String title;
   final String description;
   final String price;
-  final VoidCallback onAdd;
-  final VoidCallback onFavorite;
+  final VoidCallback onTap;
 
   const ProductCard({
     super.key,
@@ -227,52 +222,55 @@ class ProductCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.price,
-    required this.onAdd,
-    required this.onFavorite,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen
-          Expanded(
-            child: ClipRRect(
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
+    return GestureDetector(
+      onTap: onTap, // 👈 permite abrir el detalle al tocar cualquier parte
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(description,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                const SizedBox(height: 6),
-                Text(price,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal)),
-              ],
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                      const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(description,
+                      style:
+                      const TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  Text(price,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
