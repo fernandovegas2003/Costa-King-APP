@@ -1,5 +1,7 @@
+import 'package:bless_health24/views/PressionPage.dart';
 import 'package:bless_health24/views/SintomasAlternativaPage.dart';
 import 'package:flutter/material.dart';
+import '../views/ChatBotPage_view.dart';
 import 'package:http/http.dart' as http;
 import 'Login.dart';
 class SplashScreen extends StatefulWidget {
