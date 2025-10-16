@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'RegisterCitas.dart';
-import 'PrincipalCitas.dart'; // 👈 Pantalla principal de citas
+import '../Citas/PrincipalCitas.dart'; // 👈 Paciente
+import '../Admin/PrincipalAdmin.dart'; // 👈 Administrador
+import '../Doctor/AgendaDoctor.dart'; // 👈 ⚠️ Cambia esto por tu ruta real
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -21,7 +23,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     final url = Uri.parse(
-        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/auth/login");
+      "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/auth/login",
+    );
 
     try {
       final response = await http.post(
@@ -45,26 +48,49 @@ class _LoginPageState extends State<LoginPage> {
           final token = data["data"]["token"];
           final refreshToken = data["data"]["refreshToken"];
           final usuario = data["data"]["usuario"];
-          final idPaciente = data["data"]["usuario"]["idUsuario"]; // 👈 este es el idPaciente
-
+          final idUsuario = usuario["idUsuario"];
+          final idRol = usuario["idRol"]; // 👈 se usa para decidir a dónde ir
+          final rol = usuario["nombreRol"];
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("token", token);
           await prefs.setString("refreshToken", refreshToken);
-          if (idPaciente != null) {
-            await prefs.setInt("idPaciente", idPaciente); // 👈 guardamos como idPaciente
+
+          if (idUsuario != null) {
+            await prefs.setInt("idPaciente", idUsuario);
           }
 
-          // 👇 Muestra el SnackBar
+// 🩵 Guardar también el idDoctor si el rol corresponde
+          if (rol.toString().toLowerCase() == "doctor" || idRol == 2) {
+            await prefs.setInt("idDoctor", idUsuario);
+            print("✅ idDoctor guardado: $idUsuario");
+          }
+
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Bienvenido ${usuario["nombreUsuario"]}")),
           );
 
-          // 👇 Espera 500ms y navega a la pantalla principal
           Future.delayed(const Duration(milliseconds: 500), () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const MenuCitasPage()),
-            );
+            if (idRol == 1 || rol == "Paciente") {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MenuCitasPage()),
+              );
+            } else if (idRol == 2 || rol == "Doctor") {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const AgendaDoctorPage()), // 👈 tu pantalla de doctor
+              );
+            } else if (idRol == 3 || rol == "Administrador") {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MenuAdminPage()),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Rol no autorizado o sin acceso definido."),
+                ),
+              );
+            }
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

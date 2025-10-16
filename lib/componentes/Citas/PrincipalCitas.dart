@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../Citas/AgendarCita.dart';
 import '../Citas/CancelarCita.dart';
 import '../Citas/VerCitas.dart';
+import 'OrdenesMedicas.dart'; // ✅ Asegúrate de tener esta pantalla creada
+// import 'PagarCita.dart'; // ✅ (Cuando tengas la pantalla lista, descomenta esto)
 
 class MenuCitasPage extends StatelessWidget {
   const MenuCitasPage({Key? key}) : super(key: key);
@@ -10,7 +12,7 @@ class MenuCitasPage extends StatelessWidget {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF01A4B2), // 👈 Color personalizado
+        backgroundColor: const Color(0xFF01A4B2),
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 55),
         shape: RoundedRectangleBorder(
@@ -27,6 +29,50 @@ class MenuCitasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final botones = [
+      {
+        "texto": "Agendar Cita Médica",
+        "onTap": () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AgendarCitaPage()),
+        )
+      },
+      {
+        "texto": "Cancelar Cita",
+        "onTap": () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CancelarCitaPage()),
+        )
+      },
+      {
+        "texto": "Ver Citas",
+        "onTap": () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const VerCitasScreen()),
+        )
+      },
+      {
+        "texto": "Ver Órdenes Médicas",
+        "onTap": () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const VerOrdenesMedicasPage()),
+        )
+      },
+      {
+        "texto": "Pagar Cita", // 💳 Nuevo botón agregado
+        "onTap": () {
+          // Cuando tengas la vista de pago, reemplaza este print
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => const PagarCitaPage()));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Funcionalidad de pago próximamente disponible."),
+              backgroundColor: Color(0xFF01A4B2),
+            ),
+          );
+        }
+      },
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -39,7 +85,7 @@ class MenuCitasPage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // 📌 Fondo con imagen completa
+          // 📸 Fondo de pantalla
           Positioned.fill(
             child: Image.asset(
               "assets/images/Fondo.png",
@@ -47,71 +93,39 @@ class MenuCitasPage extends StatelessWidget {
             ),
           ),
 
-          // 📌 Contenido encima
-          Column(
-            children: [
-              const SizedBox(height: 180), // deja espacio arriba para la cabecera
-
-              Expanded(
-                child: Transform.translate(
-                  offset: const Offset(0, -50),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 20),
-
-                        // 👇 Botón para agendar cita
-                        _botonMenu(context, "Agendar Cita Médica", () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AgendarCitaPage(),
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 20),
-
-                        _botonMenu(context, "Cancelar Cita", () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CancelarCitaPage(), // ✅ sin const
-                            ),
-                          );
-                        }),
-
-                        const SizedBox(height: 20),
-
-                        // 👇 Botón para ver citas
-                        _botonMenu(context, "Ver Citas", () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const VerCitasScreen(), // ✅ así navega bien
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+          // 📦 Contenedor centrado con los botones
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                    offset: Offset(0, 4),
                   ),
-                ),
+                ],
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // 👈 Ajusta altura al contenido
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < botones.length; i++) ...[
+                    _botonMenu(
+                      context,
+                      botones[i]['texto'] as String,
+                      botones[i]['onTap'] as VoidCallback,
+                    ),
+                    if (i != botones.length - 1)
+                      const SizedBox(height: 20), // Espacio entre botones
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
       ),

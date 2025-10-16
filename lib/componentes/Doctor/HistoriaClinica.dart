@@ -1,464 +1,371 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'Archivos.dart';
 
 class HistoriaClinicaPage extends StatefulWidget {
-  const HistoriaClinicaPage({super.key});
+  final int idPaciente;
+
+  const HistoriaClinicaPage({super.key, required this.idPaciente});
 
   @override
   State<HistoriaClinicaPage> createState() => _HistoriaClinicaPageState();
 }
 
 class _HistoriaClinicaPageState extends State<HistoriaClinicaPage> {
-  final TextEditingController _documentoController = TextEditingController();
-  Map<String, dynamic>? _historiaClinica;
-  bool _cargando = false;
-  bool _error = false;
-  String _mensajeError = '';
-  bool _mostrarArchivos = false;
-  String _nombrePaciente = '';
-  Map<String, dynamic> _datosPaciente = {};
+  bool mostrandoHistorias = false;
+  bool cargando = false;
+  List<dynamic> historias = [];
 
-  List<dynamic> _extraerLista(dynamic source) {
-    if (source is List) return source;
-    if (source is Map && source['data'] is List) {
-      return List<dynamic>.from(source['data']);
-    }
-    return const [];
-  }
+  // Controladores
+  final TextEditingController tipoSangreCtrl = TextEditingController();
+  final TextEditingController alergiasCtrl = TextEditingController();
+  final TextEditingController enfermedadesCtrl = TextEditingController();
+  final TextEditingController medicamentosCtrl = TextEditingController();
+  final TextEditingController antecedentesFamiliaresCtrl = TextEditingController();
+  final TextEditingController observacionesCtrl = TextEditingController();
+  final TextEditingController actividadFisicaCtrl = TextEditingController();
+  final TextEditingController alimentacionDiariaCtrl = TextEditingController();
+  final TextEditingController suenioCtrl = TextEditingController();
+  final TextEditingController sexualidadCtrl = TextEditingController();
+  final TextEditingController viajesCtrl = TextEditingController();
+  final TextEditingController alcoholCtrl = TextEditingController();
+  final TextEditingController sustanciasCtrl = TextEditingController();
+  final TextEditingController antecedentesPersonalesCtrl = TextEditingController();
+  final TextEditingController diagnosticosPrincipalesCtrl = TextEditingController();
+  final TextEditingController diagnosticosDiferencialesCtrl = TextEditingController();
+  final TextEditingController planManejoCtrl = TextEditingController();
+  final TextEditingController conductaTratamientoCtrl = TextEditingController();
+  final TextEditingController remisionesCtrl = TextEditingController();
+  final TextEditingController examenesCtrl = TextEditingController();
+  final TextEditingController educacionCtrl = TextEditingController();
+  final TextEditingController epicrisisCtrl = TextEditingController();
 
-  @override
-  void dispose() {
-    _documentoController.dispose();
-    super.dispose();
-  }
-
-  // Buscar historia clínica por documento
-  Future<void> _buscarHistoriaClinica() async {
-    final documento = _documentoController.text.trim();
-    if (documento.isEmpty) {
-      setState(() {
-        _error = true;
-        _mensajeError = 'Por favor ingrese un numero de documento';
-      });
-      return;
-    }
-
+  // 🔹 Obtener historias anteriores
+  Future<void> obtenerHistorias() async {
     setState(() {
-      _cargando = true;
-      _error = false;
-      _historiaClinica = null;
-      _mostrarArchivos = false;
+      cargando = true;
     });
+
+    final url = Uri.parse(
+        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/historias-clinicas/paciente/${widget.idPaciente}");
 
     try {
-      final response = await http.get(
-        Uri.parse(
-          "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/historias-clinicas/documento/$documento",
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final lista = _extraerLista(decoded);
-        if (lista.isNotEmpty) {
-          final historia = Map<String, dynamic>.from(
-            lista.first as Map<dynamic, dynamic>,
-          );
-          final paciente = Map<String, dynamic>.from(
-            (historia['paciente'] as Map<dynamic, dynamic>? ?? {}),
-          );
-          final registros = _extraerLista(historia['registrosConsultas'])
-              .map<Map<String, dynamic>>(
-                (registro) => Map<String, dynamic>.from(
-                  registro as Map<dynamic, dynamic>,
-                ),
-              )
-              .toList();
-          historia['registrosConsultas'] = registros;
-          setState(() {
-            _historiaClinica = historia;
-            _nombrePaciente =
-                "${paciente['nombreUsuario'] ?? ''} ${paciente['apellidoUsuario'] ?? ''}"
-                    .trim();
-            _datosPaciente = {
-              'idPaciente': paciente['idUsuario'],
-              'cedula': paciente['numeroDocumento'],
-              'nombres': paciente['nombreUsuario'],
-              'apellidos': paciente['apellidoUsuario'],
-            };
-          });
-        } else {
-          setState(() {
-            _error = true;
-            _mensajeError =
-                'No se encontró historia clínica para este documento';
-          });
-        }
-      } else {
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
         setState(() {
-          _error = true;
-          _mensajeError =
-              'Error al buscar historia clínica: ${response.statusCode}';
+          historias = decoded["data"] ?? [];
         });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al obtener historias (${res.statusCode})")),
+        );
       }
     } catch (e) {
-      setState(() {
-        _error = true;
-        _mensajeError = 'Error de conexión: $e';
-      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() {
-        _cargando = false;
+        cargando = false;
       });
     }
   }
 
-  // Mostrar sección de archivos
-  void _verArchivos() {
-    setState(() {
-      _mostrarArchivos = true;
-    });
+  // 🔹 Crear historia clínica
+  Future<void> crearHistoria() async {
+    final url = Uri.parse(
+        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/historias-clinicas");
+
+    final data = {
+      "idPaciente": widget.idPaciente,
+      "tipoSangre": tipoSangreCtrl.text,
+      "alergias": alergiasCtrl.text,
+      "enfermedadesCronicas": enfermedadesCtrl.text,
+      "medicamentos": medicamentosCtrl.text,
+      "antecedentesFamiliares": antecedentesFamiliaresCtrl.text,
+      "observaciones": observacionesCtrl.text,
+      "actividadFisica": actividadFisicaCtrl.text,
+      "alimentacionDiaria": alimentacionDiariaCtrl.text,
+      "suenio": suenioCtrl.text,
+      "sexualidad": sexualidadCtrl.text,
+      "viajes": viajesCtrl.text,
+      "alcohol": alcoholCtrl.text,
+      "sustanciasPsicoactivas": sustanciasCtrl.text,
+      "antecedentesPersonales": antecedentesPersonalesCtrl.text,
+      "diagnosticosPrincipales": diagnosticosPrincipalesCtrl.text,
+      "diagnosticosDiferenciales": diagnosticosDiferencialesCtrl.text,
+      "planManejo": planManejoCtrl.text,
+      "conductaTratamiento": conductaTratamientoCtrl.text,
+      "remisiones": remisionesCtrl.text,
+      "examenesSolicitados": examenesCtrl.text,
+      "educacionPaciente": educacionCtrl.text,
+      "epicrisis": epicrisisCtrl.text
+    };
+
+    try {
+      final res = await http.post(url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(data));
+
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Historia clínica creada correctamente ✅")),
+        );
+        _limpiarCampos();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al crear historia (${res.statusCode})")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
+    }
+  }
+
+  void _limpiarCampos() {
+    tipoSangreCtrl.clear();
+    alergiasCtrl.clear();
+    enfermedadesCtrl.clear();
+    medicamentosCtrl.clear();
+    antecedentesFamiliaresCtrl.clear();
+    observacionesCtrl.clear();
+    actividadFisicaCtrl.clear();
+    alimentacionDiariaCtrl.clear();
+    suenioCtrl.clear();
+    sexualidadCtrl.clear();
+    viajesCtrl.clear();
+    alcoholCtrl.clear();
+    sustanciasCtrl.clear();
+    antecedentesPersonalesCtrl.clear();
+    diagnosticosPrincipalesCtrl.clear();
+    diagnosticosDiferencialesCtrl.clear();
+    planManejoCtrl.clear();
+    conductaTratamientoCtrl.clear();
+    remisionesCtrl.clear();
+    examenesCtrl.clear();
+    educacionCtrl.clear();
+    epicrisisCtrl.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> registrosConsultas =
-        ((_historiaClinica?['registrosConsultas'] as List<dynamic>? ?? [])
-            .whereType<Map<String, dynamic>>()
-            .toList());
-    final Map<String, dynamic>? primerRegistro = registrosConsultas.isNotEmpty
-        ? registrosConsultas.first
-        : null;
-    final int? idRegistroConsulta =
-        primerRegistro != null && primerRegistro['idRegistroConsulta'] is int
-        ? primerRegistro['idRegistroConsulta'] as int
-        : null;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Interpretación de la historia clínica",
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          mostrandoHistorias
+              ? "Historias Clínicas Anteriores"
+              : "Crear Historia Clínica",
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF00BCD4),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset("assets/images/Fondo.png", fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Buscador de historia clínica
-                if (!_mostrarArchivos) ...[
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Buscar Historia Clínica",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _documentoController,
-                            decoration: InputDecoration(
-                              labelText: "Número de Documento",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              prefixIcon: const Icon(Icons.person),
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _cargando
-                                  ? null
-                                  : _buscarHistoriaClinica,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF7FDCDC),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              child: _cargando
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      "Buscar",
-                                      style: TextStyle(fontSize: 18),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-
-                if (_error) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error, color: Colors.red),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _mensajeError,
-                            style: TextStyle(color: Colors.red.shade800),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Resultados de la búsqueda
-                if (_historiaClinica != null && !_mostrarArchivos) ...[
-                  const SizedBox(height: 24),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Información del Paciente",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.attach_file),
-                                onPressed: _verArchivos,
-                                tooltip: "Ver archivos",
-                              ),
-                            ],
-                          ),
-                          const Divider(),
-                          _buildInfoRow("Nombre", _nombrePaciente),
-                          _buildInfoRow(
-                            "Documento",
-                            _historiaClinica!['paciente']['numeroDocumento'],
-                          ),
-                          _buildInfoRow(
-                            "Fecha de creación",
-                            _historiaClinica!['fechaCreacion'],
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "Información Médica",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoRow(
-                            "Tipo de Sangre",
-                            _historiaClinica!['tipoSangre'] ?? 'No registrado',
-                          ),
-                          _buildInfoRow(
-                            "Alergias",
-                            _historiaClinica!['alergias'] ?? 'Ninguna',
-                          ),
-                          _buildInfoRow(
-                            "Enfermedades Crónicas",
-                            _historiaClinica!['enfermedadesCronicas'] ??
-                                'Ninguna',
-                          ),
-                          _buildInfoRow(
-                            "Medicamentos",
-                            _historiaClinica!['medicamentos'] ?? 'Ninguno',
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "Diagnósticos",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          if (registrosConsultas.isNotEmpty)
-                            ...registrosConsultas
-                                .map<Widget>(
-                                  (registro) => _buildDiagnosticoItem(registro),
-                                )
-                                .toList()
-                          else
-                            const Text("No hay diagnósticos registrados"),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-
-                // Sección de archivos
-                if (_mostrarArchivos) ...[
-                  Expanded(
-                    child: Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00BCD4),
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              _nombrePaciente.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            child: _historiaClinica == null
-                                ? const Center(
-                                    child: Text(
-                                      "No hay historia clínica seleccionada",
-                                    ),
-                                  )
-                                : ArchivosPage(
-                                    cita: {
-                                      'idPaciente':
-                                          _datosPaciente['idPaciente'],
-                                      'idHistoriaClinica':
-                                          _historiaClinica?['idHistoriaClinica'],
-                                    },
-                                    nombrePaciente: _nombrePaciente,
-                                    idRegistroConsulta: idRegistroConsulta,
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              if (!mostrandoHistorias) {
+                await obtenerHistorias();
+              }
+              setState(() {
+                mostrandoHistorias = !mostrandoHistorias;
+              });
+            },
+            icon: const Icon(Icons.history, color: Colors.white),
+            label: Text(
+              mostrandoHistorias ? "Crear Nueva" : "Ver Anteriores",
+              style: const TextStyle(color: Colors.white),
             ),
-          ),
+          )
         ],
       ),
+      body: cargando
+          ? const Center(child: CircularProgressIndicator())
+          : mostrandoHistorias
+          ? _buildHistoriasList()
+          : _buildFormulario(),
     );
   }
 
-  // Widget para mostrar información en filas
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
+  // 🔹 Formulario completo
+  Widget _buildFormulario() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              "$label:",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          _tituloSeccion("🧬 Datos Básicos"),
+          _campoTexto("Tipo de Sangre", tipoSangreCtrl),
+          _campoTexto("Observaciones", observacionesCtrl, maxLines: 2),
+
+          _tituloSeccion("🏥 Antecedentes Médicos"),
+          _campoTexto("Alergias", alergiasCtrl),
+          _campoTexto("Enfermedades Crónicas", enfermedadesCtrl),
+          _campoTexto("Medicamentos", medicamentosCtrl),
+          _campoTexto("Antecedentes Familiares", antecedentesFamiliaresCtrl),
+          _campoTexto("Antecedentes Personales", antecedentesPersonalesCtrl),
+
+          _tituloSeccion("💪 Hábitos y Estilo de Vida"),
+          _campoTexto("Actividad Física", actividadFisicaCtrl),
+          _campoTexto("Alimentación Diaria", alimentacionDiariaCtrl),
+          _campoTexto("Sueño", suenioCtrl),
+          _campoTexto("Sexualidad", sexualidadCtrl),
+          _campoTexto("Viajes", viajesCtrl),
+          _campoTexto("Alcohol", alcoholCtrl),
+          _campoTexto("Sustancias Psicoactivas", sustanciasCtrl),
+
+          _tituloSeccion("🩺 Diagnóstico y Tratamiento"),
+          _campoTexto("Diagnósticos Principales", diagnosticosPrincipalesCtrl, maxLines: 2),
+          _campoTexto("Diagnósticos Diferenciales", diagnosticosDiferencialesCtrl, maxLines: 2),
+          _campoTexto("Plan de Manejo", planManejoCtrl, maxLines: 2),
+          _campoTexto("Conducta / Tratamiento", conductaTratamientoCtrl, maxLines: 2),
+          _campoTexto("Remisiones", remisionesCtrl),
+          _campoTexto("Exámenes Solicitados", examenesCtrl),
+          _campoTexto("Educación al Paciente", educacionCtrl),
+          _campoTexto("Epicrisis", epicrisisCtrl, maxLines: 3),
+
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: crearHistoria,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BCD4),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
             ),
+            child: const Text("Guardar Historia Clínica"),
           ),
-          Expanded(child: Text(value)),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // Widget para mostrar diagnósticos
-  Widget _buildDiagnosticoItem(Map<String, dynamic> registro) {
-    final descripcion =
-        registro['diagnostico']?.toString() ?? 'Sin diagnóstico';
-    final fecha =
-        registro['fechaConsulta']?.toString() ?? 'Fecha no registrada';
-    final tratamiento = registro['tratamiento']?.toString();
-    final observaciones = registro['observaciones']?.toString();
-    final presion = registro['presionArterial']?.toString();
-    final frecuencia = registro['frecuenciaCardiaca']?.toString();
-    final temperatura = registro['temperatura']?.toString();
-    final peso = registro['peso'];
-    final altura = registro['altura'];
-    final imc = registro['imc'];
+// 🔹 Lista de historias anteriores (expandible y organizada)
+  Widget _buildHistoriasList() {
+    if (historias.isEmpty) {
+      return const Center(child: Text("No hay historias clínicas anteriores"));
+    }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: Colors.blue.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              descripcion,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+    return ListView.builder(
+      itemCount: historias.length,
+      padding: const EdgeInsets.all(12),
+      itemBuilder: (context, i) {
+        final h = historias[i];
+        return Card(
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            title: Text(
+              "Historia #${h['idHistoriaClinica']} (${h['fechaCreacion'].toString().substring(0, 10)})",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF00BCD4),
+              ),
             ),
-            Text('Fecha: $fecha'),
-            if (tratamiento != null && tratamiento.isNotEmpty)
-              Text('Tratamiento: $tratamiento'),
-            if (observaciones != null && observaciones.isNotEmpty)
-              Text('Observaciones: $observaciones'),
-            if ((presion != null && presion.isNotEmpty) ||
-                (frecuencia != null && frecuencia.isNotEmpty) ||
-                (temperatura != null && temperatura.isNotEmpty) ||
-                peso != null)
-              const SizedBox(height: 4),
-            if (presion != null && presion.isNotEmpty)
-              Text('Presión Arterial: $presion'),
-            if (frecuencia != null && frecuencia.isNotEmpty)
-              Text('Frecuencia Cardíaca: $frecuencia'),
-            if (temperatura != null && temperatura.isNotEmpty)
-              Text('Temperatura: $temperatura'),
-            if (peso != null) Text('Peso: $peso kg'),
-            if (altura != null) Text('Altura: $altura m'),
-            if (imc != null) Text('IMC: $imc'),
-          ],
+            subtitle: Text(
+              "Paciente: ${h['nombreUsuario']} ${h['apellidoUsuario']}\nDocumento: ${h['numeroDocumento']}",
+              style: const TextStyle(fontSize: 13),
+            ),
+            children: [
+              _bloqueHistoria("🧬 Datos Básicos", {
+                "Tipo de Sangre": h["tipoSangre"],
+                "Observaciones": h["observaciones"],
+              }),
+              _bloqueHistoria("🏥 Antecedentes Médicos", {
+                "Alergias": h["alergias"],
+                "Enfermedades Crónicas": h["enfermedadesCronicas"],
+                "Medicamentos": h["medicamentos"],
+                "Antecedentes Familiares": h["antecedentesFamiliares"],
+                "Antecedentes Personales": h["antecedentesPersonales"],
+              }),
+              _bloqueHistoria("💪 Hábitos y Estilo de Vida", {
+                "Actividad Física": h["actividadFisica"],
+                "Alimentación Diaria": h["alimentacionDiaria"],
+                "Sueño": h["suenio"],
+                "Sexualidad": h["sexualidad"],
+                "Viajes": h["viajes"],
+                "Alcohol": h["alcohol"],
+                "Sustancias Psicoactivas": h["sustanciasPsicoactivas"],
+              }),
+              _bloqueHistoria("🩺 Diagnóstico y Tratamiento", {
+                "Diagnósticos Principales": h["diagnosticosPrincipales"],
+                "Diagnósticos Diferenciales": h["diagnosticosDiferenciales"],
+                "Plan de Manejo": h["planManejo"],
+                "Conducta / Tratamiento": h["conductaTratamiento"],
+                "Remisiones": h["remisiones"],
+                "Exámenes Solicitados": h["examenesSolicitados"],
+                "Educación al Paciente": h["educacionPaciente"],
+                "Epicrisis": h["epicrisis"],
+              }),
+              const SizedBox(height: 10),
+              Text(
+                "📅 Última actualización: ${h['fechaUltimaActualizacion'] ?? 'Sin cambios'}",
+                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+// 🔹 Widget auxiliar para mostrar bloques organizados
+  Widget _bloqueHistoria(String titulo, Map<String, dynamic> campos) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00BCD4),
+            ),
+          ),
+          const SizedBox(height: 6),
+          ...campos.entries.map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Text(
+              "${e.key}: ${e.value ?? 'No registrado'}",
+              style: const TextStyle(fontSize: 14),
+            ),
+          )),
+          const Divider(thickness: 0.8),
+        ],
+      ),
+    );
+  }
+
+
+  // 🔹 Widgets auxiliares
+  Widget _campoTexto(String label, TextEditingController controller,
+      {int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
+      ),
+    );
+  }
+
+  Widget _tituloSeccion(String texto) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        texto,
+        style: const TextStyle(
+            fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF00BCD4)),
       ),
     );
   }

@@ -349,10 +349,20 @@ class _PacienteState extends State<Paciente>
   }
 
   void _abrirHistoriaClinica() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const HistoriaClinicaPage()));
+    final idPaciente = _idPaciente;
+
+    if (idPaciente == null) {
+      _showMessage('No se encontró información del paciente.');
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HistoriaClinicaPage(idPaciente: idPaciente),
+      ),
+    );
   }
+
 
   void _abrirRemitir() {
     final idPaciente = _idPaciente;

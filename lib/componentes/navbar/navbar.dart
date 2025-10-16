@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../views/Account.dart';
 
 class CustomNavbar extends StatelessWidget {
   const CustomNavbar({super.key});
@@ -13,14 +14,20 @@ class CustomNavbar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-
+              // 🔹 Botón de cuenta (lleva a MiCuentaPage)
               IconButton(
                 icon: const Icon(Icons.person, color: Colors.teal, size: 30),
                 onPressed: () {
-
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MiCuentaPage(),
+                    ),
+                  );
                 },
               ),
 
+              // 🔹 Logo y nombre
               Row(
                 children: [
                   Image.asset(
@@ -38,17 +45,20 @@ class CustomNavbar extends StatelessWidget {
                   ),
                 ],
               ),
-              // Ícono de carrito
+
+              // 🔹 Ícono de carrito
               IconButton(
                 icon: const Icon(Icons.shopping_cart, color: Colors.teal, size: 28),
                 onPressed: () {
-                  // Acción al presionar
+                  // Aquí puedes agregar navegación al carrito si la tienes
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("🛒 Ir al carrito")),
+                  );
                 },
               ),
             ],
           ),
         ),
-
       ],
     );
   }

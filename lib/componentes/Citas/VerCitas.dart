@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+// 👇 Importa la nueva pantalla con las opciones de cita
+import '../Citas/registroPac.dart';
+
 class VerCitasScreen extends StatefulWidget {
   const VerCitasScreen({Key? key}) : super(key: key);
 
@@ -121,6 +124,19 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(15),
+
+                            // ✅ Al dar click se guarda el idCita y se abre la nueva pantalla
+                            onTap: () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setInt("idCita", cita["idCita"]);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const OpcionesCitaScreen(),
+                                ),
+                              );
+                            },
+
                             title: Text(
                               cita["servicio"],
                               style: const TextStyle(
@@ -145,9 +161,12 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
                                     fontWeight: FontWeight.bold,
                                     color: cita["estado"] == "Pendiente"
                                         ? Colors.orange
+                                        : cita["estado"] == "Completada"
+                                        ? Colors.green
                                         : Colors.red,
                                   ),
                                 ),
+
                               ],
                             ),
                           ),

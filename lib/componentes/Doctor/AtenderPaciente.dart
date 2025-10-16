@@ -19,41 +19,31 @@ class AtenderPacientePage extends StatefulWidget {
   State<AtenderPacientePage> createState() => _AtenderPacientePageState();
 }
 
-class _AtenderPacientePageState extends State<AtenderPacientePage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AtenderPacientePageState extends State<AtenderPacientePage> {
+  // Controladores
   final TextEditingController _fechaController = TextEditingController();
-  final TextEditingController _tratamientoController = TextEditingController();
-  final TextEditingController _observacionesController =
-      TextEditingController();
   final TextEditingController _motivoController = TextEditingController();
   final TextEditingController _sintomasController = TextEditingController();
-  final TextEditingController _presionArterialController =
-      TextEditingController();
-  final TextEditingController _frecuenciaCardiacaController =
-      TextEditingController();
+  final TextEditingController _presionArterialController = TextEditingController();
+  final TextEditingController _frecuenciaCardiacaController = TextEditingController();
   final TextEditingController _pesoController = TextEditingController();
   final TextEditingController _alturaController = TextEditingController();
+
   bool _guardando = false;
-  int? _idHistoriaClinica;
   int? _idRegistroConsulta;
   DateTime _fechaConsulta = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
-    _fechaController.text = DateFormat('dd/MM/yy').format(_fechaConsulta);
-    _cargarHistoriaClinica();
-    _cargarDiagnostico();
+    // 🔹 Fecha fija (solo visible, no editable)
+    _fechaController.text = DateFormat('dd/MM/yy HH:mm').format(_fechaConsulta);
+    _cargarRegistroExistente();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _fechaController.dispose();
-    _tratamientoController.dispose();
-    _observacionesController.dispose();
     _motivoController.dispose();
     _sintomasController.dispose();
     _presionArterialController.dispose();
@@ -63,113 +53,57 @@ class _AtenderPacientePageState extends State<AtenderPacientePage>
     super.dispose();
   }
 
-  // Cargar historia clínica del paciente
-  Future<void> _cargarHistoriaClinica() async {
-    try {
-      final idPaciente = widget.cita['idPaciente'];
-
-      final response = await http.get(
-        Uri.parse(
-          "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/historias-clinicas/paciente/$idPaciente",
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data["data"] != null && data["data"].isNotEmpty) {
-          setState(() {
-            _idHistoriaClinica = data["data"][0]['idHistoriaClinica'];
-          });
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar historia clínica: $e")),
-      );
-    }
-  }
-
-  // Cargar diagnóstico existente si hay
-  Future<void> _cargarDiagnostico() async {
+  // 🔹 Cargar registro existente (si ya fue creado)
+  Future<void> _cargarRegistroExistente() async {
     try {
       final idCita = widget.cita['idCita'];
-
-      final response = await http.get(
+      final res = await http.get(
         Uri.parse(
           "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/registros-consultas/cita/$idCita",
         ),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
         if (data["data"] != null && data["data"].isNotEmpty) {
-          final registro = data["data"][0];
+          final r = data["data"][0];
           setState(() {
-            _idRegistroConsulta = registro['idRegistroConsulta'];
-            _tratamientoController.text = registro['tratamiento'] ?? '';
-            _observacionesController.text = registro['observaciones'] ?? '';
-            _motivoController.text = registro['motivoConsulta'] ?? '';
-            _sintomasController.text = registro['sintomas'] ?? '';
-            _presionArterialController.text = registro['presionArterial'] ?? '';
-            _frecuenciaCardiacaController.text =
-                registro['frecuenciaCardiaca'] ?? '';
-            _pesoController.text = registro['peso'] != null
-                ? '${registro['peso']}'
-                : '';
-            _alturaController.text = registro['altura'] != null
-                ? '${registro['altura']}'
-                : '';
-            if (registro['fechaConsulta'] != null) {
-              try {
-                _fechaConsulta = DateFormat(
-                  'yyyy-MM-dd HH:mm:ss',
-                ).parse(registro['fechaConsulta']);
-                _fechaController.text = DateFormat(
-                  'dd/MM/yy',
-                ).format(_fechaConsulta);
-              } catch (_) {}
-            }
+            _idRegistroConsulta = r['idRegistroConsulta'];
+            _motivoController.text = r['motivoConsulta'] ?? '';
+            _sintomasController.text = r['sintomas'] ?? '';
+            _presionArterialController.text = r['presionArterial'] ?? '';
+            _frecuenciaCardiacaController.text = r['frecuenciaCardiaca'] ?? '';
+            _pesoController.text = r['peso']?.toString() ?? '';
+            _alturaController.text = r['altura']?.toString() ?? '';
           });
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar diagnóstico: $e")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error al cargar registro: $e")));
     }
   }
 
-  // Guardar diagnóstico
-  Future<void> _guardarDiagnostico() async {
-    if (_idHistoriaClinica == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No se encontró historia clínica del paciente"),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _guardando = true;
-    });
+  Future<void> _guardarRegistro() async {
+    setState(() => _guardando = true);
 
     try {
-      final idCita = widget.cita['idCita'];
       final prefs = await SharedPreferences.getInstance();
-      final idMedico = prefs.getString("idMedico");
+      final int? idMedicoParsed = prefs.getInt("idDoctor"); // ✅ obtenido del login
 
-      final idMedicoParsed = int.tryParse(idMedico ?? '');
       if (idMedicoParsed == null || idMedicoParsed <= 0) {
-        setState(() {
-          _guardando = false;
-        });
+        setState(() => _guardando = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "No se encontró un identificador de médico válido. Inicie sesión nuevamente.",
-            ),
-          ),
+          const SnackBar(content: Text("No se encontró un médico válido. Inicie sesión nuevamente.")),
+        );
+        return;
+      }
+
+      // Validar motivoConsulta (es obligatorio)
+      if (_motivoController.text.trim().isEmpty) {
+        setState(() => _guardando = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Debe ingresar un motivo de consulta.")),
         );
         return;
       }
@@ -177,90 +111,64 @@ class _AtenderPacientePageState extends State<AtenderPacientePage>
       final double? peso = double.tryParse(_pesoController.text.trim());
       final double? altura = double.tryParse(_alturaController.text.trim());
 
+      // 🔹 Body fijo con idHistoriaClinica = 2
       final body = {
-        "idHistoriaClinica": _idHistoriaClinica,
-        "idMedico": idMedicoParsed,
-        "idCita": idCita,
-        "fechaConsulta": DateFormat(
-          'yyyy-MM-dd HH:mm:ss',
-        ).format(_fechaConsulta),
-        "motivoConsulta": _motivoController.text,
-        "sintomas": _sintomasController.text,
-        "presionArterial": _presionArterialController.text,
-        "frecuenciaCardiaca": _frecuenciaCardiacaController.text,
-        "tratamiento": _tratamientoController.text,
-        "observaciones": _observacionesController.text,
+        "idHistoriaClinica": 21, // ✅ siempre 2
+        "idMedico": idMedicoParsed, // ✅ funciona desde SharedPreferences
+        "idCita": widget.cita['idCita'], // viene de la cita seleccionada
+        "fechaConsulta": DateFormat('yyyy-MM-dd HH:mm:ss').format(_fechaConsulta), // ✅ fecha actual
+        "motivoConsulta": _motivoController.text.trim(), // ✅ obligatorio
+        "sintomas": _sintomasController.text.trim(),
+        "presionArterial": _presionArterialController.text.trim(),
+        "frecuenciaCardiaca": _frecuenciaCardiacaController.text.trim(),
+        "peso": peso,
+        "altura": altura
       };
 
-      if (peso != null) {
-        body["peso"] = peso;
-      }
-      if (altura != null) {
-        body["altura"] = altura;
-      }
+      debugPrint("📤 Enviando body: ${jsonEncode(body)}");
 
-      final Uri uri = Uri.parse(
+      final uri = Uri.parse(
         "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/registros-consultas",
       );
 
-      final response = await http.post(
+      final res = await http.post(
         uri,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
       );
 
-      setState(() {
-        _guardando = false;
-      });
+      setState(() => _guardando = false);
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (res.statusCode == 201 || res.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Diagnóstico guardado con éxito")),
+          const SnackBar(content: Text("Registro de cita creado correctamente ✅")),
         );
         Navigator.pop(context, true);
       } else {
-        final errorData = jsonDecode(response.body);
+        debugPrint("❌ Error en el guardado:");
+        debugPrint("Status code: ${res.statusCode}");
+        debugPrint("Respuesta del servidor: ${res.body}");
+
+        String mensajeError;
+        try {
+          final data = jsonDecode(res.body);
+          mensajeError = data['message'] ?? data['mensaje'] ?? data['error'] ?? res.body;
+        } catch (_) {
+          mensajeError = res.body;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Error: ${errorData['message'] ?? 'Error desconocido'}",
-            ),
-          ),
+          SnackBar(content: Text("Error del servidor: $mensajeError")),
         );
       }
+
     } catch (e) {
-      setState(() {
-        _guardando = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al guardar diagnóstico: $e")),
-      );
+      setState(() => _guardando = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error al guardar registro: $e")));
     }
   }
 
-  // Seleccionar fecha
-  Future<void> _seleccionarFecha() async {
-    final fecha = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2025),
-    );
-
-    if (fecha != null) {
-      setState(() {
-        _fechaConsulta = DateTime(
-          fecha.year,
-          fecha.month,
-          fecha.day,
-          _fechaConsulta.hour,
-          _fechaConsulta.minute,
-          _fechaConsulta.second,
-        );
-        _fechaController.text = DateFormat('dd/MM/yy').format(_fechaConsulta);
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -270,12 +178,8 @@ class _AtenderPacientePageState extends State<AtenderPacientePage>
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
         title: const Text(
-          "Agenda de citas",
+          "Registro de Consulta",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Stack(
@@ -299,212 +203,71 @@ class _AtenderPacientePageState extends State<AtenderPacientePage>
                   textAlign: TextAlign.center,
                 ),
               ),
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.teal,
-                  tabs: const [
-                    Tab(text: "Datos"),
-                    Tab(text: "Diagnóstico"),
-                    Tab(text: "Archivos"),
-                  ],
-                ),
-              ),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Pestaña de Datos
-                    const Center(child: Text("Información del paciente")),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Datos de la Consulta",
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
 
-                    // Pestaña de Diagnóstico
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Diagnóstico",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                      _campo("Fecha de consulta", _fechaController, readOnly: true),
+                      _campo("Motivo de consulta", _motivoController, maxLines: 2),
+                      _campo("Síntomas", _sintomasController, maxLines: 3),
+                      _campo("Presión arterial", _presionArterialController),
+                      _campo("Frecuencia cardíaca", _frecuenciaCardiacaController),
+                      _campo("Peso (kg)", _pesoController, keyboardType: TextInputType.numberWithOptions(decimal: true)),
+                      _campo("Altura (m)", _alturaController, keyboardType: TextInputType.numberWithOptions(decimal: true)),
+                      const SizedBox(height: 30),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _guardando ? null : _guardarRegistro,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00BCD4),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-                          const SizedBox(height: 20),
-
-                          // Campo de fecha
-                          TextField(
-                            controller: _fechaController,
-                            decoration: InputDecoration(
-                              labelText: "DD/MM/AA",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.calendar_today),
-                                onPressed: _seleccionarFecha,
-                              ),
-                            ),
-                            readOnly: true,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo motivo consulta
-                          TextField(
-                            controller: _motivoController,
-                            decoration: InputDecoration(
-                              labelText: "Motivo de la consulta",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo síntomas
-                          TextField(
-                            controller: _sintomasController,
-                            decoration: InputDecoration(
-                              labelText: "Síntomas",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo presión arterial
-                          TextField(
-                            controller: _presionArterialController,
-                            decoration: InputDecoration(
-                              labelText: "Presión arterial",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo frecuencia cardiaca
-                          TextField(
-                            controller: _frecuenciaCardiacaController,
-                            decoration: InputDecoration(
-                              labelText: "Frecuencia cardiaca",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo peso
-                          TextField(
-                            controller: _pesoController,
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Peso (kg)",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo altura
-                          TextField(
-                            controller: _alturaController,
-                            keyboardType: TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Altura (m)",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo tratamiento
-                          TextField(
-                            controller: _tratamientoController,
-                            decoration: InputDecoration(
-                              labelText: "Tratamiento",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            maxLines: 4,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Campo observaciones
-                          TextField(
-                            controller: _observacionesController,
-                            decoration: InputDecoration(
-                              labelText: "Observaciones",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            maxLines: 6,
-                          ),
-                          const SizedBox(height: 30),
-
-                          // Botón de guardar
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _guardando
-                                  ? null
-                                  : _guardarDiagnostico,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF7FDCDC),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                              ),
-                              child: _guardando
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      "Guardar",
-                                      style: TextStyle(fontSize: 18),
-                                    ),
-                            ),
-                          ),
-                        ],
+                          child: _guardando
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text("Guardar Registro", style: TextStyle(fontSize: 18)),
+                        ),
                       ),
-                    ),
-
-                    // Pestaña de Archivos
-                    ArchivosPage(
-                      cita: widget.cita,
-                      nombrePaciente: widget.nombrePaciente,
-                      idRegistroConsulta: _idRegistroConsulta,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _campo(
+      String label,
+      TextEditingController controller, {
+        int maxLines = 1,
+        bool readOnly = false,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }
