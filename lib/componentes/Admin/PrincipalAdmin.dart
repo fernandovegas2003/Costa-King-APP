@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'VerUsers.dart';
 import 'ViewCitas.dart';
 import 'HClinica.dart';
+import 'DashboardAdminPage.dart';
 
 class MenuAdminPage extends StatelessWidget {
   const MenuAdminPage({Key? key}) : super(key: key);
@@ -59,6 +60,15 @@ class MenuAdminPage extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => const VerHistoriasClinicasPage(),
             ),
+          );
+        }
+      },
+      {
+        'texto': "Ver estadisticas",
+        'onTap': () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardAdminPage()),
           );
         }
       },

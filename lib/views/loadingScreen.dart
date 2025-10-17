@@ -1,10 +1,5 @@
-import 'package:bless_health24/componentes/Admin/DashboardAdminPage.dart';
-import 'package:bless_health24/views/PressionPage.dart';
-import 'package:bless_health24/views/SintomasAlternativaPage.dart';
 import 'package:flutter/material.dart';
-import '../views/ChatBotPage_view.dart';
 import 'package:http/http.dart' as http;
-import '../../componentes/Admin/ViewCitas.dart';
 import 'Login.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (hasInternet) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardAdminPage()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } else {
       setState(() {
