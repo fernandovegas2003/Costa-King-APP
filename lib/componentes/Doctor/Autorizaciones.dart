@@ -12,7 +12,6 @@ class VerAutorizacionesPage extends StatefulWidget {
 class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
   List<dynamic> autorizaciones = [];
   bool cargando = true;
-  bool creando = false;
 
   @override
   void initState() {
@@ -39,50 +38,15 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
     }
   }
 
-  Future<void> crearAutorizacion() async {
-    setState(() => creando = true);
-    const url = 'https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/autorizaciones';
-
-    final body = {
-      "idOrdenMedica": 1,
-      "idAutorizador": 10,
-      "estadoAutorizacion": "Aprobada",
-      "observaciones": "Autorización aprobada por EL DOCTOR"
-    };
-
-    try {
-      final respuesta = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
-
-      if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Autorización creada correctamente")),
-        );
-        obtenerAutorizaciones();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al crear: ${respuesta.body}")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    } finally {
-      setState(() => creando = false);
-    }
-  }
-
   void mostrarDetallesAutorizacion(Map<String, dynamic> autorizacion) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Detalles de la Autorización",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Detalles de la Autorización",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,13 +83,7 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Color(0xFF01A4B2)),
-            onPressed: creando ? null : crearAutorizacion,
-            tooltip: "Crear nueva autorización",
-          ),
-        ],
+        // 🔹 Se eliminó el botón de crear
       ),
       body: Stack(
         children: [
@@ -182,12 +140,13 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
                           shape: RoundedRectangleBorder(
                               borderRadius:
                               BorderRadius.circular(12)),
-                          margin:
-                          const EdgeInsets.symmetric(vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8),
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0xFF01A4B2),
-                              child: Icon(Icons.assignment_turned_in,
+                              child: Icon(
+                                  Icons.assignment_turned_in,
                                   color: Colors.white),
                             ),
                             title: Text(
