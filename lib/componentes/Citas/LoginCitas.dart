@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'RegisterCitas.dart';
 import '../Citas/PrincipalCitas.dart'; // 👈 Paciente
 import '../Admin/PrincipalAdmin.dart'; // 👈 Administrador
-import '../Doctor/AgendaDoctor.dart'; // 👈 ⚠️ Cambia esto por tu ruta real
+import '../Doctor/AgendaDoctor.dart';  // 👈 Doctor
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -38,9 +38,6 @@ class _LoginPageState extends State<LoginPage> {
 
       setState(() => _isLoading = false);
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -49,8 +46,9 @@ class _LoginPageState extends State<LoginPage> {
           final refreshToken = data["data"]["refreshToken"];
           final usuario = data["data"]["usuario"];
           final idUsuario = usuario["idUsuario"];
-          final idRol = usuario["idRol"]; // 👈 se usa para decidir a dónde ir
+          final idRol = usuario["idRol"];
           final rol = usuario["nombreRol"];
+          final numeroDocumento = usuario["numeroDocumento"]; // 👈 Extraemos el número
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("token", token);
@@ -60,17 +58,23 @@ class _LoginPageState extends State<LoginPage> {
             await prefs.setInt("idPaciente", idUsuario);
           }
 
-// 🩵 Guardar también el idDoctor si el rol corresponde
+          // 🩵 Guardar también el idDoctor si el rol corresponde
           if (rol.toString().toLowerCase() == "doctor" || idRol == 2) {
             await prefs.setInt("idDoctor", idUsuario);
             print("✅ idDoctor guardado: $idUsuario");
           }
 
+          // 🆕 Guardar el número de documento del usuario
+          if (numeroDocumento != null && numeroDocumento.toString().isNotEmpty) {
+            await prefs.setString("numeroDocumento", numeroDocumento.toString());
+            print("✅ númeroDocumento guardado: $numeroDocumento");
+          }
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Bienvenido ${usuario["nombreUsuario"]}")),
           );
 
+          // 🔄 Redirección según el rol
           Future.delayed(const Duration(milliseconds: 500), () {
             if (idRol == 1 || rol == "Paciente") {
               Navigator.of(context).pushReplacement(
@@ -78,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
               );
             } else if (idRol == 2 || rol == "Doctor") {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AgendaDoctorPage()), // 👈 tu pantalla de doctor
+                MaterialPageRoute(builder: (_) => const AgendaDoctorPage()),
               );
             } else if (idRol == 3 || rol == "Administrador") {
               Navigator.of(context).pushReplacement(

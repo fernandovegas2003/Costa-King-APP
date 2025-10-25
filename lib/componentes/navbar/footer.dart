@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../Citas/LoginCitas.dart'; // Pantalla de citas
 import '../../views/Noticias.dart';    // Pantalla de noticias
 import '../../views/PrincipalPage.dart'; // Pantalla principal
-import '../../views/ChatBotPage_view.dart';
+import '../../views/chats.dart'; // 👈 Cambia esta importación
 
 class CustomFooterNav extends StatelessWidget {
   final int currentIndex;
@@ -27,7 +27,7 @@ class CustomFooterNav extends StatelessWidget {
             Icons.home,
             "Inicio",
             0,
-            isInicio: true, // 👈 ahora inicio también navega
+            isInicio: true,
           ),
           _buildNavItem(
             context,
@@ -62,9 +62,8 @@ class CustomFooterNav extends StatelessWidget {
       int index, {
         bool isCitas = false,
         bool isNoticias = false,
-        bool isInicio = false, // 👈 añadimos flag
-        bool isChat= false,
-
+        bool isInicio = false,
+        bool isChat = false,
       }) {
     return GestureDetector(
       onTap: () {
@@ -77,7 +76,7 @@ class CustomFooterNav extends StatelessWidget {
         else if (isChat) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const ChatBotPage()),
+            MaterialPageRoute(builder: (_) => const ChatOptionsPage()), // 👈 Cambiado aquí
           );
         } else if (isNoticias) {
           Navigator.push(
@@ -99,7 +98,7 @@ class CustomFooterNav extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.teal, // 👈 siempre igual
+              color: Colors.teal,
               borderRadius: BorderRadius.circular(30),
             ),
             child: Icon(

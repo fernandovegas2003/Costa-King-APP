@@ -37,7 +37,6 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    fetchVersiculo();
     fetchNoticias();
   }
 
@@ -49,24 +48,6 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
     }
   }
 
-  /// Traer versículo
-  Future<void> fetchVersiculo() async {
-    try {
-      final response = await http.get(
-        Uri.parse("https://api-noticias-lecturas.onrender.com/versiculo-aleatorio"),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _versiculo = data; // 👈 directo, no "versiculo_principal"
-        });
-      } else {
-        print("❌ Error fetchVersiculo: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("❌ Error fetchVersiculo: $e");
-    }
-  }
 
   /// Traer noticias
   Future<void> fetchNoticias() async {

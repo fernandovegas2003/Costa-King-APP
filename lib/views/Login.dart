@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 import '../componentes/buttons/Button1.dart';
 import 'Registro.dart';
+import 'package:flutter/foundation.dart';
 import 'PrincipalPage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,8 +18,36 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
   bool loading = false;
+
+  // 🔹 FUNCIÓN PARA DEBUGUEAR EL TOKEN
+  void _debugToken(String token) {
+    if (kDebugMode) {
+      print('🔐 TOKEN RECIBIDO:');
+      print('📏 Longitud: ${token.length}');
+
+      final parts = token.split('.');
+      print('🔢 Partes del token: ${parts.length}');
+
+      if (parts.length == 3) {
+        print('✅ Token tiene formato JWT válido');
+        try {
+          final payload = parts[1];
+          // Normalizar base64
+          String normalized = base64.normalize(payload);
+          String decoded = utf8.decode(base64.decode(normalized));
+          final payloadMap = json.decode(decoded);
+
+          print('👤 User ID en token: ${payloadMap['userId']}');
+          print('⏰ Expiración: ${payloadMap['exp']}');
+        } catch (e) {
+          print('❌ Error decodificando token: $e');
+        }
+      } else {
+        print('❌ ERROR: Token no tiene formato JWT válido');
+      }
+    }
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -36,12 +67,6 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
-
-
-      //Version arreglada para mi profe Malu
-
-
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -49,27 +74,35 @@ class _LoginPageState extends State<LoginPage> {
             data["token"] != "NULL_TOKEN" &&
             data["usuario"] != null &&
             data["usuario"]["id"] != 0) {
-          print("Login exitoso: $data");
+
+          print("✅ Login exitoso: $data");
+
+          // 🔹 DEBUG DEL TOKEN
+          _debugToken(data["token"]);
+
+          // 🔹 GUARDAR DATOS DEL USUARIO
+          final authService = Provider.of<AuthService>(context, listen: false);
+          await authService.login(data);
 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
         } else {
-          print("Error esas no son las credenciales: $data");
+          print("❌ Error en credenciales: $data");
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Correo o contraseña incorrectos")),
           );
         }
       } else {
-        print("Error: ${response.statusCode}");
-        print("Respuesta: ${response.body}");
+        print("❌ Error: ${response.statusCode}");
+        print("❌ Respuesta: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: ${response.body}")),
         );
       }
     } catch (e) {
-      print("Error de conexión: $e");
+      print("❌ Error de conexión: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error de conexión con el servidor")),
       );

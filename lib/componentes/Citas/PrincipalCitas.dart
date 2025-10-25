@@ -3,6 +3,10 @@ import '../Citas/AgendarCita.dart';
 import '../Citas/CancelarCita.dart';
 import '../Citas/VerCitas.dart';
 import 'OrdenesMedicas.dart'; // ✅ Asegúrate de tener esta pantalla creada
+import './Factura/Factura.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ IMPORT NECESARIO
+import 'NPL.dart';
+
 // import 'PagarCita.dart'; // ✅ (Cuando tengas la pantalla lista, descomenta esto)
 
 class MenuCitasPage extends StatelessWidget {
@@ -29,6 +33,7 @@ class MenuCitasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+// En MenuCitasPage.dart, actualiza la lista de botones:
     final botones = [
       {
         "texto": "Agendar Cita Médica",
@@ -59,17 +64,24 @@ class MenuCitasPage extends StatelessWidget {
         )
       },
       {
-        "texto": "Pagar Cita", // 💳 Nuevo botón agregado
-        "onTap": () {
-          // Cuando tengas la vista de pago, reemplaza este print
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => const PagarCitaPage()));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Funcionalidad de pago próximamente disponible."),
-              backgroundColor: Color(0xFF01A4B2),
+        "texto": "Ver Facturas",
+        "onTap": () async {
+          final prefs = await SharedPreferences.getInstance();
+          final cedula = prefs.getString("numeroDocumento") ?? "";
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FacturasScreen(cedula: cedula),
             ),
           );
         }
+      },
+      {
+        "texto": "NPL - Procesar Archivo",
+        "onTap": () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const NPLScreen()),
+        ),
       },
     ];
 

@@ -87,9 +87,37 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
       );
 
       if (response.statusCode == 200) {
+        // ✅ Cita finalizada con éxito
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Cita finalizada con éxito")),
         );
+
+        // 🔹 Ahora generamos la factura desde la cita
+        try {
+          final facturaResponse = await http.post(
+            Uri.parse(
+                "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/facturas/generar-desde-cita/$idCita"),
+            headers: {"Content-Type": "application/json"},
+          );
+
+          if (facturaResponse.statusCode == 200) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Factura generada correctamente")),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      "Error al generar factura: ${facturaResponse.body}")),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error al generar factura: $e")),
+          );
+        }
+
+        // 🔁 Recargar citas
         _cargarCitasPorFecha();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,6 +129,7 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
           .showSnackBar(SnackBar(content: Text("Error al finalizar cita: $e")));
     }
   }
+
 
   Future<void> _cancelarCita(int idCita) async {
     try {
@@ -404,16 +433,56 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
                                       style: TextStyle(color: Colors.purple),
                                     ),
                                   ),
-                                  // Nuevo botón agregado
                                   TextButton.icon(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => VerAutorizacionesPage(
-                                          ),
-                                        ),
-                                      );
+                                    onPressed: () async {
+                                      final idCita = cita['idCita'];
+
+                                      if (idCita == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("No se encontró el ID de la cita.")),
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+                                        // 🔹 Llamada al endpoint /api/citas/{idCita}
+                                        final response = await http.get(
+                                          Uri.parse("https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/$idCita"),
+                                        );
+
+                                        if (response.statusCode == 200) {
+                                          final data = jsonDecode(response.body);
+
+                                          // 🔹 Intentamos obtener el idPaciente o idUsuarioCC
+                                          final idPaciente = data['data']?['idPaciente'] ?? data['data']?['idUsuarioCC'];
+
+                                          if (idPaciente != null) {
+                                            // 🔹 Guardamos el ID en SharedPreferences
+                                            final prefs = await SharedPreferences.getInstance();
+                                            await prefs.setInt('idPacienteSeleccionado', int.tryParse(idPaciente.toString()) ?? 0);
+
+                                            // 🔹 Navegamos a la página de Autorizaciones
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => const VerAutorizacionesPage(),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("No se encontró el paciente en la cita.")),
+                                            );
+                                          }
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text("Error al obtener datos de la cita: ${response.body}")),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text("Error de conexión: $e")),
+                                        );
+                                      }
                                     },
                                     icon: const Icon(Icons.verified_user_outlined, color: Colors.teal),
                                     label: const Text(
@@ -421,6 +490,8 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
                                       style: TextStyle(color: Colors.teal),
                                     ),
                                   ),
+
+
 
                                 ],
                               ),

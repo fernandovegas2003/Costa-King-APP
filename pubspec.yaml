@@ -38,8 +38,9 @@ dependencies:
   connectivity_plus: ^6.1.5
   intl: ^0.19.0
   image_picker: ^1.1.2
-  file_picker: ^8.1.4
+  file_picker: ^10.3.3
   signature: 5.3.2
+  provider: ^6.1.5+1  # 🔹 AGREGA ESTA LÍNEA
 
 dev_dependencies:
   flutter_test:

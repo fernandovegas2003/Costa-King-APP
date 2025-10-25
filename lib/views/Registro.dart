@@ -34,7 +34,7 @@ class _RegistroPageState extends State<RegistroPage> {
         "correo": correoController.text,
         "contrasena": contrasenaController.text,
         "confirmarContrasena": confirmarContrasenaController.text,
-        "rol": 1, // Rol fijo por defecto
+        "rol": 2, // Rol fijo por defecto
       };
 
       final response = await http.post(
