@@ -1,10 +1,23 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'views/loadingScreen.dart';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ⚠️ SOLO para desarrollo: permite certificados autofirmados
+  HttpOverrides.global = MyHttpOverrides();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthService(),
@@ -12,6 +25,8 @@ void main() async {
     ),
   );
 }
+
+
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -41,32 +56,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.paused:
-      // App en segundo plano
         print('⏸️ App en background');
         break;
-
       case AppLifecycleState.resumed:
-      // App en primer plano
         print('▶️ App en foreground');
         break;
-
       case AppLifecycleState.detached:
-      // App completamente cerrada - LIMPIAR SESIÓN
         print('🚪 App cerrada - Limpiando sesión...');
         authService.clearSessionOnExit();
         break;
-
       case AppLifecycleState.inactive:
-      // App inactiva temporalmente
         break;
-
       case AppLifecycleState.hidden:
-      // App oculta (nueva en Flutter 3.22+)
         print('🙈 App oculta pero aún activa');
         break;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
