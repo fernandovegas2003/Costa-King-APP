@@ -2,16 +2,64 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'pago_screen.dart';
+import '../loginCitas.dart';
+
+// 🎨 TU PALETA DE COLORES PROFESIONAL
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+// 🖋️ TUS ESTILOS DE TEXTO PROFESIONALES
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp'; // Asegúrate de tener esta fuente
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel, // 🎨 Color
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle total = TextStyle(
+    color: AppColors.keppel, // 🎨 Color
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class PagoScreen extends StatefulWidget {
   final Map<String, dynamic> factura;
   final VoidCallback? onPagoExitoso;
 
-  const PagoScreen({
-    super.key,
-    required this.factura,
-    this.onPagoExitoso,
-  });
+  const PagoScreen({super.key, required this.factura, this.onPagoExitoso});
 
   @override
   State<PagoScreen> createState() => _PagoScreenState();
@@ -24,17 +72,22 @@ class _PagoScreenState extends State<PagoScreen> {
 
   // Controladores para PayPal
   final TextEditingController _emailPayPalController = TextEditingController();
-  final TextEditingController _passwordPayPalController = TextEditingController();
+  final TextEditingController _passwordPayPalController =
+      TextEditingController();
 
   // Controladores para Tarjeta
-  final TextEditingController _numeroTarjetaController = TextEditingController();
-  final TextEditingController _fechaExpiracionController = TextEditingController();
+  final TextEditingController _numeroTarjetaController =
+      TextEditingController();
+  final TextEditingController _fechaExpiracionController =
+      TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
-  final TextEditingController _nombreTitularController = TextEditingController();
+  final TextEditingController _nombreTitularController =
+      TextEditingController();
 
   // Controladores para PSE
   final TextEditingController _emailPSEController = TextEditingController();
-  final TextEditingController _numeroDocumentoPSEController = TextEditingController();
+  final TextEditingController _numeroDocumentoPSEController =
+      TextEditingController();
 
   String? _tipoPersonaPSE;
   String? _tipoDocumentoPSE;
@@ -59,14 +112,6 @@ class _PagoScreenState extends State<PagoScreen> {
     _cargarDocumento();
   }
 
-  Future<void> _cargarDocumento() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      numeroDocumento = prefs.getString('numeroDocumento');
-    });
-    print("📄 Documento del usuario: $numeroDocumento");
-  }
-
   @override
   void dispose() {
     _emailPayPalController.dispose();
@@ -80,38 +125,37 @@ class _PagoScreenState extends State<PagoScreen> {
     super.dispose();
   }
 
+  // --- (TODA TU LÓGICA DE API, VALIDACIÓN Y PAGO SE MANTIENE EXACTAMENTE IGUAL) ---
+  Future<void> _cargarDocumento() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      numeroDocumento = prefs.getString('numeroDocumento');
+    });
+    print("📄 Documento del usuario: $numeroDocumento");
+  }
+
   Future<void> _procesarPago() async {
     if (_metodoSeleccionado == null) {
       _mostrarError("Por favor selecciona un método de pago");
       return;
     }
-
-    // Validar formularios según el método seleccionado
     if (!_validarFormulario()) {
       return;
     }
-
     setState(() => _procesando = true);
-
     try {
-      // Simular procesamiento de pago
       await Future.delayed(const Duration(seconds: 3));
-
-      // Simular diferentes resultados basados en el método de pago
       final randomValue = DateTime.now().millisecond % 10;
       bool exito = randomValue > 2; // 70% de éxito
 
       if (exito) {
-        // Eliminar factura del backend
         final idFactura = widget.factura['idFactura'];
         final response = await http.delete(
           Uri.parse(
             "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/facturas/$idFactura",
           ),
         );
-
         setState(() => _procesando = false);
-
         if (response.statusCode == 200) {
           _mostrarComprobanteExitoso();
         } else {
@@ -140,7 +184,6 @@ class _PagoScreenState extends State<PagoScreen> {
           return false;
         }
         return true;
-
       case 'Tarjeta':
         if (_numeroTarjetaController.text.isEmpty ||
             _fechaExpiracionController.text.isEmpty ||
@@ -149,7 +192,10 @@ class _PagoScreenState extends State<PagoScreen> {
           _mostrarError("Por favor completa todos los campos de la tarjeta");
           return false;
         }
-        final cleanedCard = _numeroTarjetaController.text.replaceAll(RegExp(r'\s+'), '');
+        final cleanedCard = _numeroTarjetaController.text.replaceAll(
+          RegExp(r'\s+'),
+          '',
+        );
         if (cleanedCard.length != 16) {
           _mostrarError("Número de tarjeta inválido");
           return false;
@@ -159,7 +205,6 @@ class _PagoScreenState extends State<PagoScreen> {
           return false;
         }
         return true;
-
       case 'PSE':
         if (_tipoPersonaPSE == null ||
             _tipoDocumentoPSE == null ||
@@ -170,7 +215,6 @@ class _PagoScreenState extends State<PagoScreen> {
           return false;
         }
         return true;
-
       default:
         return false;
     }
@@ -178,25 +222,43 @@ class _PagoScreenState extends State<PagoScreen> {
 
   void _mostrarError(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(mensaje), backgroundColor: Colors.red[700]),
     );
   }
 
+  String _formatearFecha(String fecha) {
+    try {
+      final date = DateTime.parse(fecha);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return fecha;
+    }
+  }
+
+  // --- (FIN DE LA LÓGICA) ---
+
+  // 🎨 --- DIÁLOGOS REDISEÑADOS --- 🎨
   void _mostrarComprobanteExitoso() {
-    final transactionId = '${_metodoSeleccionado!.substring(0, 3).toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
+    final transactionId =
+        '${_metodoSeleccionado!.substring(0, 3).toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Row(
+        backgroundColor: AppColors.white, // 🎨 Color
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
+            Icon(Icons.check_circle, color: AppColors.keppel), // 🎨 Color
             SizedBox(width: 8),
-            Text('¡Pago Exitoso!'),
+            Text(
+              '¡Pago Exitoso!',
+              style: AppTextStyles.headline.copyWith(
+                fontSize: 20,
+                color: AppColors.keppel,
+              ),
+            ), // 🎨 Estilo
           ],
         ),
         content: SingleChildScrollView(
@@ -204,34 +266,54 @@ class _PagoScreenState extends State<PagoScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildComprobanteItem('Factura:', widget.factura['numeroFactura']),
+              _buildComprobanteItem(
+                'Factura:',
+                widget.factura['numeroFactura'],
+              ),
               _buildComprobanteItem('Transacción:', transactionId),
               _buildComprobanteItem('Método:', _metodoSeleccionado!),
-              _buildComprobanteItem('Total:', '\$${widget.factura['total']}'),
-              _buildComprobanteItem('Fecha:', _formatearFecha(DateTime.now().toIso8601String())),
+              _buildComprobanteItem(
+                'Total:',
+                '\$${widget.factura['total']}',
+                isTotal: true,
+              ), // 🎨 Estilo
+              _buildComprobanteItem(
+                'Fecha:',
+                _formatearFecha(DateTime.now().toIso8601String()),
+              ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: AppColors.keppel.withOpacity(0.1), // 🎨 Color
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   '✅ La factura ha sido pagada exitosamente',
-                  style: TextStyle(color: Colors.green),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.keppel,
+                    fontSize: 14,
+                  ), // 🎨 Estilo
                 ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine, // 🎨 Color
+              foregroundColor: AppColors.paynesGray, // 🎨 Color
+            ),
             onPressed: () {
               Navigator.pop(context);
               if (widget.onPagoExitoso != null) widget.onPagoExitoso!();
               Navigator.pop(context, true);
             },
-            child: const Text('Continuar'),
+            child: const Text(
+              'Continuar',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -241,7 +323,7 @@ class _PagoScreenState extends State<PagoScreen> {
   void _mostrarErrorPagoFallido() {
     String mensajeError;
     String sugerencia;
-
+    // ... (lógica de mensajes sin cambios)
     switch (_metodoSeleccionado) {
       case 'PayPal':
         mensajeError = "Pago rechazado por PayPal";
@@ -263,33 +345,59 @@ class _PagoScreenState extends State<PagoScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        backgroundColor: AppColors.white, // 🎨 Color
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.red),
+            Icon(Icons.error_outline, color: Colors.red[700]), // Semántico
             SizedBox(width: 8),
-            Text('Error en el Pago'),
+            Text(
+              'Error en el Pago',
+              style: AppTextStyles.headline.copyWith(
+                fontSize: 20,
+                color: Colors.red[700],
+              ),
+            ), // 🎨 Estilo
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(mensajeError),
+            Text(mensajeError, style: AppTextStyles.body), // 🎨 Estilo
             const SizedBox(height: 8),
-            Text(sugerencia, style: const TextStyle(color: Colors.grey)),
+            Text(
+              sugerencia,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.paynesGray.withOpacity(0.7),
+                fontSize: 14,
+              ),
+            ), // 🎨 Estilo
           ],
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine, // 🎨 Color
+              foregroundColor: AppColors.paynesGray, // 🎨 Color
+            ),
             onPressed: () => Navigator.pop(context),
-            child: const Text('Reintentar'),
+            child: const Text(
+              'Reintentar',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildComprobanteItem(String label, String value) {
+  // 🎨 WIDGET HELPER REDISEÑADO
+  Widget _buildComprobanteItem(
+    String label,
+    String value, {
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -299,74 +407,108 @@ class _PagoScreenState extends State<PagoScreen> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: AppTextStyles.body.copyWith(
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                color: isTotal
+                    ? AppColors.keppel
+                    : AppColors.paynesGray.withOpacity(0.7), // 🎨 Color
+                fontSize: 14,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: isTotal
+                  ? AppTextStyles.total
+                  : AppTextStyles.body.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ), // 🎨 Estilo
         ],
       ),
     );
   }
 
-  String _formatearFecha(String fecha) {
-    try {
-      final date = DateTime.parse(fecha);
-      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return fecha;
-    }
+  // 🎨 Estilo de decoración base para los campos
+  InputDecoration _formFieldDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: AppTextStyles.body.copyWith(
+        color: AppColors.paynesGray.withOpacity(0.7),
+      ),
+      prefixIcon: Icon(icon, color: AppColors.paynesGray, size: 20),
+      filled: true,
+      fillColor:
+          AppColors.white, // Ligeramente diferente para formularios de pago
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12), // 🎨 Bordes más definidos
+        borderSide: BorderSide(color: AppColors.iceBlue),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.keppel, width: 2),
+      ),
+      errorStyle: TextStyle(
+        color: Colors.red[700],
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
+  // 🎨 FORMULARIOS REDISEÑADOS
   Widget _buildFormularioPayPal() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.white.withOpacity(0.7), // 🎨 Color
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Ingresa a tu cuenta PayPal',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+            style: AppTextStyles.cardTitle,
+          ), // 🎨 Estilo
           const SizedBox(height: 16),
           TextFormField(
             controller: _emailPayPalController,
-            decoration: const InputDecoration(
-              labelText: 'Email de PayPal',
-              prefixIcon: Icon(Icons.email),
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Email de PayPal',
+              Icons.email_outlined,
             ),
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _passwordPayPalController,
-            decoration: const InputDecoration(
-              labelText: 'Contraseña',
-              prefixIcon: Icon(Icons.lock),
-              border: OutlineInputBorder(),
-            ),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration('Contraseña', Icons.lock_outline),
             obscureText: true,
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: AppColors.iceBlue.withOpacity(0.5), // 🎨 Color
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.blue, size: 16),
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.keppel,
+                  size: 16,
+                ), // 🎨 Color
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Datos de prueba: usuario@example.com / cualquier contraseña',
-                    style: TextStyle(fontSize: 12, color: Colors.blue),
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 12,
+                      color: AppColors.keppel,
+                    ), // 🎨 Estilo
                   ),
                 ),
               ],
@@ -381,26 +523,24 @@ class _PagoScreenState extends State<PagoScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.white.withOpacity(0.7), // 🎨 Color
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Información de la Tarjeta',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+            style: AppTextStyles.cardTitle,
+          ), // 🎨 Estilo
           const SizedBox(height: 16),
           TextFormField(
             controller: _numeroTarjetaController,
-            decoration: const InputDecoration(
-              labelText: 'Número de Tarjeta',
-              prefixIcon: Icon(Icons.credit_card),
-              border: OutlineInputBorder(),
-              hintText: '1234 5678 9012 3456',
-            ),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Número de Tarjeta',
+              Icons.credit_card_outlined,
+            ).copyWith(hintText: '1234 5678 9012 3456'),
             keyboardType: TextInputType.number,
             maxLength: 19,
           ),
@@ -410,12 +550,11 @@ class _PagoScreenState extends State<PagoScreen> {
               Expanded(
                 child: TextFormField(
                   controller: _fechaExpiracionController,
-                  decoration: const InputDecoration(
-                    labelText: 'MM/AA',
-                    prefixIcon: Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(),
-                    hintText: '12/25',
-                  ),
+                  style: AppTextStyles.body,
+                  decoration: _formFieldDecoration(
+                    'MM/AA',
+                    Icons.calendar_today_outlined,
+                  ).copyWith(hintText: '12/25'),
                   maxLength: 5,
                 ),
               ),
@@ -423,12 +562,11 @@ class _PagoScreenState extends State<PagoScreen> {
               Expanded(
                 child: TextFormField(
                   controller: _cvvController,
-                  decoration: const InputDecoration(
-                    labelText: 'CVV',
-                    prefixIcon: Icon(Icons.lock),
-                    border: OutlineInputBorder(),
-                    hintText: '123',
-                  ),
+                  style: AppTextStyles.body,
+                  decoration: _formFieldDecoration(
+                    'CVV',
+                    Icons.lock_outline,
+                  ).copyWith(hintText: '123'),
                   keyboardType: TextInputType.number,
                   maxLength: 4,
                 ),
@@ -438,29 +576,35 @@ class _PagoScreenState extends State<PagoScreen> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _nombreTitularController,
-            decoration: const InputDecoration(
-              labelText: 'Nombre del Titular',
-              prefixIcon: Icon(Icons.person),
-              border: OutlineInputBorder(),
-              hintText: 'JUAN PEREZ',
-            ),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Nombre del Titular',
+              Icons.person_outline,
+            ).copyWith(hintText: 'JUAN PEREZ'),
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green[50],
+              color: AppColors.iceBlue.withOpacity(0.5), // 🎨 Color
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.credit_card, color: Colors.green, size: 16),
+                Icon(
+                  Icons.credit_card,
+                  color: AppColors.keppel,
+                  size: 16,
+                ), // 🎨 Color
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Tarjeta de prueba: 4111 1111 1111 1111 / 12/25 / 123',
-                    style: TextStyle(fontSize: 12, color: Colors.green),
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 12,
+                      color: AppColors.keppel,
+                    ), // 🎨 Estilo
                   ),
                 ),
               ],
@@ -475,83 +619,81 @@ class _PagoScreenState extends State<PagoScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.white.withOpacity(0.7), // 🎨 Color
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Información para PSE',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+            style: AppTextStyles.cardTitle,
+          ), // 🎨 Estilo
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _tipoPersonaPSE,
-            decoration: const InputDecoration(
-              labelText: 'Tipo de Persona',
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Tipo de Persona',
+              Icons.person_search_outlined,
             ),
             items: ['Natural', 'Jurídica'].map((String value) {
               return DropdownMenuItem<String>(value: value, child: Text(value));
             }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _tipoPersonaPSE = value;
-              });
-            },
+            onChanged: (value) => setState(() => _tipoPersonaPSE = value),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _tipoDocumentoPSE,
-            decoration: const InputDecoration(
-              labelText: 'Tipo de Documento',
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Tipo de Documento',
+              Icons.badge_outlined,
             ),
-            items: ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'NIT', 'Pasaporte']
-                .map((String value) {
-              return DropdownMenuItem<String>(value: value, child: Text(value));
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _tipoDocumentoPSE = value;
-              });
-            },
+            items:
+                [
+                  'Cédula de Ciudadanía',
+                  'Cédula de Extranjería',
+                  'NIT',
+                  'Pasaporte',
+                ].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+            onChanged: (value) => setState(() => _tipoDocumentoPSE = value),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _numeroDocumentoPSEController,
-            decoration: const InputDecoration(
-              labelText: 'Número de Documento',
-              prefixIcon: Icon(Icons.badge),
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Número de Documento',
+              Icons.badge_outlined,
             ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _bancoSeleccionadoPSE,
-            decoration: const InputDecoration(
-              labelText: 'Selecciona tu Banco',
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Selecciona tu Banco',
+              Icons.account_balance_outlined,
             ),
             items: bancosPSE.map((String banco) {
               return DropdownMenuItem<String>(value: banco, child: Text(banco));
             }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _bancoSeleccionadoPSE = value;
-              });
-            },
+            onChanged: (value) => setState(() => _bancoSeleccionadoPSE = value),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _emailPSEController,
-            decoration: const InputDecoration(
-              labelText: 'Email para confirmación',
-              prefixIcon: Icon(Icons.email),
-              border: OutlineInputBorder(),
+            style: AppTextStyles.body,
+            decoration: _formFieldDecoration(
+              'Email para confirmación',
+              Icons.email_outlined,
             ),
             keyboardType: TextInputType.emailAddress,
           ),
@@ -573,71 +715,111 @@ class _PagoScreenState extends State<PagoScreen> {
     }
   }
 
+  // 🎨 MÉTODO DE PAGO REDISEÑADO
   Widget _buildMetodoPagoOption(String metodo, IconData icono, Color color) {
     final activo = _metodoSeleccionado == metodo;
     return Card(
       elevation: 2,
+      color: activo
+          ? AppColors.aquamarine.withOpacity(0.3)
+          : AppColors.white.withOpacity(0.7), // 🎨 Color
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: activo ? AppColors.aquamarine : AppColors.white, // 🎨 Color
+          width: 2,
+        ),
+      ),
       child: ListTile(
-        leading: Icon(icono, color: activo ? color : Colors.grey),
-        title: Text(metodo, style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: activo ? color : Colors.black87,
-        )),
+        leading: Icon(
+          icono,
+          color: activo ? AppColors.keppel : AppColors.paynesGray,
+        ), // 🎨 Color
+        title: Text(
+          metodo,
+          style: AppTextStyles.body.copyWith(
+            fontWeight: FontWeight.w600,
+            color: activo ? AppColors.keppel : AppColors.paynesGray, // 🎨 Color
+          ),
+        ),
         trailing: Radio<String>(
           value: metodo,
           groupValue: _metodoSeleccionado,
           onChanged: (value) => setState(() => _metodoSeleccionado = value),
-          activeColor: color,
+          activeColor: AppColors.keppel, // 🎨 Color
         ),
         onTap: () => setState(() => _metodoSeleccionado = metodo),
-        tileColor: activo ? color.withOpacity(0.1) : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: activo ? color : Colors.grey.shade300,
-            width: activo ? 2 : 1,
-          ),
-        ),
       ),
     );
   }
 
+  // 🎨 --- BUILD METHOD REDISEÑADO --- 🎨
   @override
   Widget build(BuildContext context) {
     final factura = widget.factura;
 
     return Scaffold(
+      backgroundColor: AppColors.celeste, // 🎨 Color
       appBar: AppBar(
-        title: const Text("Pago de Factura"),
-        backgroundColor: const Color(0xFF0066CC),
-        foregroundColor: Colors.white,
+        title: Text(
+          "Pago de Factura",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ), // 🎨 Estilo
+        backgroundColor: Colors.transparent, // 🎨 Color
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
+          ), // 🎨 Color
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Resumen de Factura
-            Card(
-              elevation: 3,
-              child: Padding(
+      body: Container(
+        // 🎨 GRADIENTE DE FONDO
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Resumen de Factura (Rediseñado)
+              Container(
                 padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withOpacity(0.7), // 🎨 Color
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.white), // 🎨 Color
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "RESUMEN DE FACTURA",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF0066CC),
-                      ),
+                      style: AppTextStyles.cardTitle, // 🎨 Estilo
                     ),
-                    const SizedBox(height: 12),
+                    Divider(
+                      color: AppColors.keppel.withOpacity(0.5),
+                      height: 20,
+                      thickness: 1,
+                    ), // 🎨 Color
                     _buildInfoRow('Número:', factura['numeroFactura'] ?? '---'),
                     _buildInfoRow('Concepto:', factura['concepto'] ?? '---'),
-                    _buildInfoRow('Paciente:', factura['nombreCompletoPaciente'] ?? '---'),
-                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'Paciente:',
+                      factura['nombreCompletoPaciente'] ?? '---',
+                    ),
+                    Divider(
+                      color: AppColors.keppel.withOpacity(0.5),
+                      height: 24,
+                    ), // 🎨 Color
                     _buildInfoRow(
                       'TOTAL A PAGAR:',
                       '\$${factura['total'] ?? '0'}',
@@ -646,111 +828,143 @@ class _PagoScreenState extends State<PagoScreen> {
                   ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
-
-            // Selección de Método de Pago
-            const Text(
-              "SELECCIONA MÉTODO DE PAGO",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            _buildMetodoPagoOption("PayPal", Icons.account_balance_wallet, Colors.blue),
-            const SizedBox(height: 8),
-            _buildMetodoPagoOption("Tarjeta", Icons.credit_card, Colors.green),
-            const SizedBox(height: 8),
-            _buildMetodoPagoOption("PSE", Icons.account_balance, Colors.orange),
-
-            // Formulario según método seleccionado
-            if (_metodoSeleccionado != null) ...[
               const SizedBox(height: 24),
-              _buildFormularioSeleccionado(),
-            ],
 
-            // Información de Sandbox
-            if (_metodoSeleccionado != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[100]!),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.security, color: Colors.blue, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'MODO PRUEBA ACTIVADO',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+              // Selección de Método de Pago
+              Text(
+                "SELECCIONA MÉTODO DE PAGO",
+                style: AppTextStyles.cardTitle, // 🎨 Estilo
+              ),
+              const SizedBox(height: 12),
+
+              _buildMetodoPagoOption(
+                "PayPal",
+                Icons.account_balance_wallet_outlined,
+                AppColors.paynesGray,
+              ),
+              const SizedBox(height: 8),
+              _buildMetodoPagoOption(
+                "Tarjeta",
+                Icons.credit_card_outlined,
+                AppColors.paynesGray,
+              ),
+              const SizedBox(height: 8),
+              _buildMetodoPagoOption(
+                "PSE",
+                Icons.account_balance_outlined,
+                AppColors.paynesGray,
+              ),
+
+              // Formulario según método seleccionado
+              if (_metodoSeleccionado != null) ...[
+                const SizedBox(height: 24),
+                _buildFormularioSeleccionado(),
+              ],
+
+              // Información de Sandbox
+              if (_metodoSeleccionado != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.keppel.withOpacity(0.1), // 🎨 Color
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.keppel.withOpacity(0.3),
+                    ), // 🎨 Color
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.security,
+                            color: AppColors.keppel,
+                            size: 18,
+                          ), // 🎨 Color
+                          SizedBox(width: 8),
+                          Text(
+                            'MODO PRUEBA ACTIVADO',
+                            style: AppTextStyles.body.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.keppel,
+                              fontSize: 14,
+                            ), // 🎨 Estilo
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Text('🔒 Este es un entorno seguro de pruebas'),
-                    Text('💳 No se realizarán cargos reales'),
-                    Text('✅ Usa datos de prueba para simular pagos'),
-                  ],
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '🔒 Este es un entorno seguro de pruebas',
+                        style: AppTextStyles.body.copyWith(fontSize: 14),
+                      ), // 🎨 Estilo
+                      Text(
+                        '💳 No se realizarán cargos reales',
+                        style: AppTextStyles.body.copyWith(fontSize: 14),
+                      ), // 🎨 Estilo
+                      Text(
+                        '✅ Usa datos de prueba para simular pagos',
+                        style: AppTextStyles.body.copyWith(fontSize: 14),
+                      ), // 🎨 Estilo
+                    ],
+                  ),
                 ),
-              ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Botón de Pago (Rediseñado)
+              if (_procesando)
+                Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(
+                        color: AppColors.aquamarine,
+                      ), // 🎨 Color
+                      SizedBox(height: 16),
+                      Text(
+                        'Procesando pago...',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.paynesGray,
+                        ), // 🎨 Estilo
+                      ),
+                    ],
+                  ),
+                )
+              else if (_metodoSeleccionado != null)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _procesarPago,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.aquamarine, // 🎨 Color
+                      foregroundColor: AppColors.paynesGray, // 🎨 Color
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          30,
+                        ), // 🎨 Redondeado
+                      ),
+                    ),
+                    child: Text(
+                      'PAGAR \$${factura['total'] ?? '0'}',
+                      style: AppTextStyles.button, // 🎨 Estilo
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
             ],
-
-            const SizedBox(height: 24),
-
-            // Botón de Pago
-            if (_procesando)
-              const Center(
-                child: Column(
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Procesando pago...',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              )
-            else if (_metodoSeleccionado != null)
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _procesarPago,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'PAGAR \$${factura['total'] ?? '0'}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
       ),
     );
   }
 
+  // 🎨 WIDGET HELPER REDISEÑADO
   Widget _buildInfoRow(String label, String value, {bool isTotal = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -759,19 +973,22 @@ class _PagoScreenState extends State<PagoScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              color: isTotal ? Colors.black : Colors.grey[700],
+            style: AppTextStyles.body.copyWith(
+              // 🎨 Estilo
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              color: isTotal
+                  ? AppColors.paynesGray
+                  : AppColors.paynesGray.withOpacity(0.7),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: isTotal ? 18 : 14,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.w400,
-                color: isTotal ? Colors.green : Colors.black,
-              ),
+              style: isTotal
+                  ? AppTextStyles.total
+                  : AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ), // 🎨 Estilo
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
             ),

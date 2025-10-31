@@ -3,6 +3,17 @@ import 'VerUsers.dart';
 import 'ViewCitas.dart';
 import 'HClinica.dart';
 import 'DashboardAdminPage.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
+
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
 
 class MenuAdminPage extends StatelessWidget {
   const MenuAdminPage({Key? key}) : super(key: key);
@@ -11,14 +22,12 @@ class MenuAdminPage extends StatelessWidget {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF01A4B2),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.keppel, 
+        foregroundColor: AppColors.white, 
         minimumSize: const Size(double.infinity, 55),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 5,
-        shadowColor: Colors.black38,
+        shadowColor: AppColors.paynesGray.withOpacity(0.3),
       ),
       child: Text(
         texto,
@@ -26,6 +35,7 @@ class MenuAdminPage extends StatelessWidget {
           fontSize: 17,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
+          color: AppColors.white,
         ),
       ),
     );
@@ -41,7 +51,7 @@ class MenuAdminPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => const VerUsuariosPage()),
           );
-        }
+        },
       },
       {
         'texto': "Ver Todas las Citas",
@@ -50,7 +60,7 @@ class MenuAdminPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => const VerCitasAdminPage()),
           );
-        }
+        },
       },
       {
         'texto': "Historias Clínicas",
@@ -61,7 +71,7 @@ class MenuAdminPage extends StatelessWidget {
               builder: (context) => const VerHistoriasClinicasPage(),
             ),
           );
-        }
+        },
       },
       {
         'texto': "Ver estadisticas",
@@ -70,19 +80,19 @@ class MenuAdminPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => const DashboardAdminPage()),
           );
-        }
+        },
       },
     ];
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white, // 🎨 Color
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: AppColors.paynesGray), // 🎨 Color
         title: const Text(
           "Panel de Administración",
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.paynesGray, // 🎨 Color
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -90,28 +100,26 @@ class MenuAdminPage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          /// 🌅 Fondo
+          
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/Fondo.png",
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset("assets/images/Fondo.png", fit: BoxFit.cover),
           ),
 
-          /// 📦 Contenido centrado
           Center(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Container(
                 width: MediaQuery.of(context).size.width * 0.88,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 28),
+                  horizontal: 24,
+                  vertical: 28,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.93),
+                  color: AppColors.white.withOpacity(0.93), // 
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black26,
+                      color: AppColors.paynesGray.withOpacity(0.15), // 
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: Offset(0, 4),
@@ -122,20 +130,24 @@ class MenuAdminPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       "Opciones de Gestión",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF01A4B2),
+                        color: AppColors.keppel, // 🎨 Color
                       ),
                     ),
                     const SizedBox(height: 30),
                     ...botones.map((b) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 20),
-                        child: _botonMenu(context, b['texto'] as String, b['onTap'] as VoidCallback),
+                        child: _botonMenu(
+                          context,
+                          b['texto'] as String,
+                          b['onTap'] as VoidCallback,
+                        ),
                       );
                     }).toList(),
                   ],

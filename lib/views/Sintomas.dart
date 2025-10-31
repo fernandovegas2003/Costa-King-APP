@@ -5,6 +5,47 @@ import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 import 'DiagnosticoSintoma.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
+
 class SintomasPage extends StatefulWidget {
   const SintomasPage({super.key});
 
@@ -16,7 +57,7 @@ class _SintomasPageState extends State<SintomasPage> {
   Map<String, dynamic>? sintomas;
   String? sintomaSeleccionado;
   bool cargando = true;
-  int _selectedIndex = 1; // 🔹 Para controlar el footer
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -44,181 +85,208 @@ class _SintomasPageState extends State<SintomasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar arriba
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Título de la página
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Selección de Síntomas",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006D73),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  "Selección de Síntomas",
+                  style: AppTextStyles.headline,
                 ),
               ),
-            ),
 
-            // 🔹 Contenido principal
-            Expanded(
-              child: cargando
-                  ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(color: Color(0xFF006D73)),
-                    SizedBox(height: 16),
-                    Text(
-                      "Cargando síntomas...",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : Column(
-                children: [
-                  // 🔹 Mensaje de selección
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Card(
-                      color: Colors.blue[50],
-                      child: const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: Row(
+              Expanded(
+                child: cargando
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.info, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Selecciona un síntoma para obtener un diagnóstico",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.blue,
-                                ),
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.aquamarine,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "Cargando síntomas...",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 🔹 Lista de síntomas
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 12,
-                      ),
-                      children: [
-                        // 🔹 Cada categoría en una Card blanca
-                        ...sintomas!.entries.map((entry) {
-                          return Card(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                      )
+                    : Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
                             ),
-                            margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 2,
-                            child: ExpansionTile(
-                              leading: Icon(
-                                Icons.medical_services,
-                                color: Color(0xFF006D73),
+                            child: Card(
+                              color: AppColors.keppel.withOpacity(
+                                0.1,
                               ),
-                              title: Text(
-                                entry.key.toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 21, 20, 21),
-                                ),
-                              ),
-                              children: entry.value.map<Widget>((s) {
-                                return RadioListTile<String>(
-                                  title: Text(
-                                    s,
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  value: s,
-                                  groupValue: sintomaSeleccionado,
-                                  onChanged: (val) {
-                                    setState(() => sintomaSeleccionado = val);
-                                  },
-                                  activeColor: Color(0xFF006D73),
-                                );
-                              }).toList(),
-                            ),
-                          );
-                        }).toList(),
-
-                        const SizedBox(height: 20),
-
-                        // 🔹 Botón al final
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: sintomaSeleccionado == null
-                                  ? Colors.grey
-                                  : const Color(0xFF006D73),
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              minimumSize: const Size(double.infinity, 50),
-                              elevation: 3,
-                            ),
-                            onPressed: sintomaSeleccionado == null
-                                ? null
-                                : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => DiagnosticoSintomaPage(
-                                    sintoma: sintomaSeleccionado!,
-                                  ),
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: AppColors.keppel.withOpacity(0.3),
                                 ),
-                              );
-                            },
-                            child: Text(
-                              sintomaSeleccionado == null
-                                  ? "Selecciona un síntoma"
-                                  : "Consultar diagnóstico para: ${sintomaSeleccionado!}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 16,
                               ),
-                              textAlign: TextAlign.center,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: AppColors.keppel,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        "Selecciona un síntoma para obtener un diagnóstico",
+                                        style: AppTextStyles.body.copyWith(
+                                          fontSize: 14,
+                                          color: AppColors.keppel,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ],
+                          const SizedBox(height: 16),
+
+                          Expanded(
+                            child: ListView(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 12,
+                              ),
+                              children: [
+                                ...sintomas!.entries.map((entry) {
+                                  return Card(
+                                    color: AppColors.white.withOpacity(
+                                      0.7,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    elevation: 2,
+                                    child: ExpansionTile(
+                                      leading: Icon(
+                                        Icons.medical_services_outlined,
+                                        color: AppColors.keppel,
+                                      ),
+                                      title: Text(
+                                        entry.key.toUpperCase(),
+                                        style: AppTextStyles
+                                            .cardTitle,
+                                      ),
+                                      iconColor: AppColors.keppel,
+                                      collapsedIconColor:
+                                          AppColors.keppel,
+                                      children: entry.value.map<Widget>((s) {
+                                        return RadioListTile<String>(
+                                          title: Text(
+                                            s,
+                                            style: AppTextStyles.body.copyWith(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          value: s,
+                                          groupValue: sintomaSeleccionado,
+                                          onChanged: (val) {
+                                            setState(
+                                              () => sintomaSeleccionado = val,
+                                            );
+                                          },
+                                          activeColor:
+                                              AppColors.keppel,
+                                        );
+                                      }).toList(),
+                                    ),
+                                  );
+                                }).toList(),
+
+                                const SizedBox(height: 20),
+
+                                Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          sintomaSeleccionado == null
+                                              ? AppColors.paynesGray.withOpacity(
+                                                  0.3,
+                                                )
+                                              : AppColors
+                                                    .aquamarine,
+                                      foregroundColor:
+                                          AppColors.paynesGray,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      minimumSize: const Size(
+                                        double.infinity,
+                                        50,
+                                      ),
+                                      elevation: 3,
+                                    ),
+                                    onPressed: sintomaSeleccionado == null
+                                        ? null
+                                        : () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      DiagnosticoSintomaPage(
+                                                        sintoma:
+                                                            sintomaSeleccionado!,
+                                                      ),
+                                                ),
+                                              );
+                                          },
+                                    child: Text(
+                                      sintomaSeleccionado == null
+                                          ? "Selecciona un síntoma"
+                                          : "Consultar diagnóstico",
+                                      style: AppTextStyles.button,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-            ),
 
-            // 🔹 Footer abajo
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() => _selectedIndex = index);
-                // La navegación ya está manejada en el CustomFooterNav
-              },
-            ),
-          ],
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

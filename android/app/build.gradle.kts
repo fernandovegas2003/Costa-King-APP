@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.bless_health24"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
 

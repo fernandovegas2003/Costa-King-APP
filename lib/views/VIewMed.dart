@@ -1,11 +1,53 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../componentes/navbar/navbar.dart';
 import '../componentes/navbar/footer.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+    height: 1.5,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle detailPrice = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class ProductoDetallePage extends StatefulWidget {
   final int idProducto;
@@ -22,14 +64,13 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
   int _selectedIndex = 0;
   int _cantidad = 1;
 
-  // 🔹 Variables para el usuario
   int? _userId;
   String? _token;
   String? _userName;
   bool _isLoggedIn = false;
 
-  // 🔹 TOKEN FIJO PARA PRUEBAS
-  final String _fixedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFVzdWFyaW8iOjQ4LCJyb2wiOiJ1c3VhcmlvIiwiY29ycmVvIjoianVhbm11bm96cm9qYXM5NEBnbWFpbC5jb20iLCJpYXQiOjE3NjExOTc0NDMsImV4cCI6NDkxNjk1NzQ0M30.IHCIWNpKs0OEmr8UMaw9Tbs6AHPlAjzLcOU-mZ4B85k";
+  final String _fixedToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFVzdWFyaW8iOjQ4LCJyb2wiOiJ1c3VhcmlvIiwiY29ycmVvIjoianVhbm11bm96cm9qYXM5NEBnbWFpbC5jb20iLCJpYXQiOjE3NjExOTc0NDMsImV4cCI6NDkxNjk1NzQ0M30.IHCIWNpKs0OEmr8UMaw9Tbs6AHPlAjzLcOU-mZ4B85k";
 
   @override
   void initState() {
@@ -67,25 +108,25 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
 
       setState(() {
         _userId = authService.userId;
-        _token = _fixedToken; // 🔹 USAR TOKEN FIJO
+        _token = _fixedToken;
         _userName = authService.userName;
-        _isLoggedIn = true; // 🔹 FORZAR COMO LOGUEADO
+        _isLoggedIn = true;
       });
 
       print('👤 Usuario cargado: ID: $_userId');
       print('🔐 Token fijo cargado');
-
     } catch (e) {
       print('❌ Error cargando datos de usuario: $e');
     }
   }
 
-  // 🔹 MÉTODO SIMPLIFICADO PARA AGREGAR AL CARRITO
   Future<void> _agregarAlCarrito() async {
-    if (!_isLoggedIn) {
+    if (!_isLoggedIn || _token == null || _userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("❌ Debes iniciar sesión para agregar al carrito"),
+          content: Text(
+            "❌ Error de autenticación. Intenta iniciar sesión de nuevo.",
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -94,15 +135,18 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
 
     try {
       print('🛒 Enviando solicitud al carrito...');
-      print('📦 Datos: usuarioId: $_userId, productoId: ${widget.idProducto}, cantidad: $_cantidad');
+      print(
+        '📦 Datos: usuarioId: $_userId, productoId: ${widget.idProducto}, cantidad: $_cantidad',
+      );
       print('🔐 Token: ${_token!.substring(0, 50)}...');
 
-      // 🔹 USAR SOLAMENTE LA ESTRUCTURA QUE FUNCIONA EN POSTMAN
       final response = await http.post(
-        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/carrito/agregar"),
+        Uri.parse(
+          "https://blesshealth24-7-backecommerce.onrender.com/carrito/agregar",
+        ),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_token', // 🔹 TOKEN FIJO
+          'Authorization': 'Bearer $_token',
         },
         body: jsonEncode({
           "usuarioId": _userId,
@@ -118,15 +162,18 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("✅ Producto agregado al carrito"),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.keppel,
           ),
         );
-        print('✅ Producto agregado al carrito - Usuario: $_userId, Producto: ${widget.idProducto}');
+        print(
+          '✅ Producto agregado al carrito - Usuario: $_userId, Producto: ${widget.idProducto}',
+        );
       } else {
         String errorMessage = "Error desconocido";
         try {
           final errorData = json.decode(response.body);
-          errorMessage = errorData['error'] ?? errorData['message'] ?? response.body;
+          errorMessage =
+              errorData['error'] ?? errorData['message'] ?? response.body;
         } catch (e) {
           errorMessage = response.body;
         }
@@ -150,7 +197,6 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
     }
   }
 
-  // 🔹 MÉTODO PARA IR AL LOGIN
   void _irALogin() {
     Navigator.pushNamed(context, '/login');
   }
@@ -158,215 +204,265 @@ class _ProductoDetallePageState extends State<ProductoDetallePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : _producto == null
-            ? const Center(child: Text("No se encontró el producto"))
-            : Column(
-          children: [
-            const CustomNavbar(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Imagen del producto
-                      Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            _producto!["imgProducto"],
-                            height: 250,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 250,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.photo, size: 50, color: Colors.grey),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+      backgroundColor: AppColors.celeste,
 
-                      // Nombre del producto
-                      Text(
-                        _producto!["nombreProducto"] ?? "Producto",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.paynesGray),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
 
-                      // Descripción
-                      Text(
-                        _producto!["descripcionProducto"] ?? "Sin descripción",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Precio
-                      Text(
-                        "Precio: \$${_producto!["precioProducto"] ?? "0.00"}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.teal,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Stock
-                      Text(
-                        "Stock disponible: ${_producto!["stockProducto"] ?? 0}",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Promoción
-                      if (_producto!["promocion"] != null)
-                        Text(
-                          "Promoción: ${_producto!["promocion"]}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.blueGrey,
-                          ),
-                        ),
-
-                      const SizedBox(height: 20),
-
-                      // 🔹 SELECTOR DE CANTIDAD
-                      Row(
-                        children: [
-                          const Text(
-                            "Cantidad:",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[300]!),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove, size: 20),
-                                  onPressed: _cantidad > 1
-                                      ? () => setState(() => _cantidad--)
-                                      : null,
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Text(
-                                    '$_cantidad',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: _cargando
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.aquamarine,
+                    ),
+                  ),
+                )
+              : _producto == null
+              ? const Center(
+                  child: Text(
+                    "No se encontró el producto",
+                    style: AppTextStyles.body,
+                  ),
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    color: AppColors.white.withOpacity(0.5),
+                                    child: Image.network(
+                                      _producto!["imgProducto"],
+                                      height: 300,
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          height: 300,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.white
+                                                .withOpacity(0.3),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Icon(
+                                            Icons.broken_image_outlined,
+                                            size: 60,
+                                            color: AppColors.paynesGray,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.add, size: 20),
-                                  onPressed: _cantidad < (_producto!["stockProducto"] ?? 1)
-                                      ? () => setState(() => _cantidad++)
-                                      : null,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                              ),
+                              const SizedBox(height: 24),
 
-                      const SizedBox(height: 30),
+                              Text(
+                                _producto!["nombreProducto"] ?? "Producto",
+                                style: AppTextStyles.headline,
+                              ),
+                              const SizedBox(height: 12),
 
-                      // 🔹 BOTÓN MEJORADO
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoggedIn ? _agregarAlCarrito : _irALogin,
-                              icon: Icon(_isLoggedIn ? Icons.add_shopping_cart : Icons.login),
-                              label: Text(
-                                _isLoggedIn
-                                    ? "Agregar al carrito ($_cantidad)"
-                                    : "Iniciar sesión para comprar",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                              Text(
+                                "\$${_producto!["precioProducto"] ?? "0.00"}",
+                                style: AppTextStyles
+                                    .detailPrice,
+                              ),
+                              const SizedBox(height: 20),
+
+                              Text(
+                                _producto!["descripcionProducto"] ??
+                                    "Sin descripción",
+                                style: AppTextStyles.body,
+                              ),
+                              const SizedBox(height: 16),
+
+                              Text(
+                                "Stock disponible: ${_producto!["stockProducto"] ?? 0}",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.paynesGray.withOpacity(0.7),
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isLoggedIn
-                                    ? Colors.teal
-                                    : Colors.orange,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
+                              const SizedBox(height: 10),
+
+                              if (_producto!["promocion"] != null)
+                                Text(
+                                  "Promoción: ${_producto!["promocion"]}",
+                                  style: AppTextStyles.body.copyWith(
+                                    color:
+                                        AppColors.keppel,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                              const SizedBox(height: 24),
+                              const Divider(color: AppColors.keppel),
+                              const SizedBox(height: 24),
+
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    "Cantidad:",
+                                    style: AppTextStyles.button,
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.white.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.remove,
+                                            color: AppColors.paynesGray,
+                                          ),
+                                          onPressed: _cantidad > 1
+                                              ? () =>
+                                                  setState(() => _cantidad--)
+                                              : null,
+                                        ),
+                                        Text(
+                                          '$_cantidad',
+                                          style: AppTextStyles.button,
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.add,
+                                            color: AppColors.paynesGray,
+                                          ),
+                                          onPressed:
+                                              _cantidad <
+                                                  (_producto!["stockProducto"] ??
+                                                      1)
+                                                  ? () =>
+                                                      setState(() => _cantidad++)
+                                                  : null,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 30),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isLoggedIn
+                                      ? _agregarAlCarrito
+                                      : _irALogin,
+                                  icon: Icon(
+                                    _isLoggedIn
+                                        ? Icons.add_shopping_cart
+                                        : Icons.login,
+                                  ),
+                                  label: Text(
+                                    _isLoggedIn
+                                        ? "Agregar al carrito ($_cantidad)"
+                                        : "Iniciar sesión para comprar",
+                                    style: AppTextStyles.button,
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _isLoggedIn
+                                        ? AppColors.aquamarine
+                                        : AppColors.keppel,
+                                    foregroundColor: _isLoggedIn
+                                        ? AppColors.paynesGray
+                                        : AppColors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: _isLoggedIn
+                                      ? AppColors.keppel.withOpacity(0.1)
+                                      : AppColors.paynesGray.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _isLoggedIn
+                                        ? AppColors.keppel.withOpacity(0.3)
+                                        : AppColors.paynesGray.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _isLoggedIn
+                                          ? Icons.person_pin
+                                          : Icons.info_outline,
+                                      color: _isLoggedIn
+                                          ? AppColors.keppel
+                                          : AppColors.paynesGray,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _isLoggedIn
+                                            ? "Conectado como: $_userName"
+                                            : "Inicia sesión para agregar productos.",
+                                        style: AppTextStyles.body.copyWith(
+                                          color: _isLoggedIn
+                                              ? AppColors.keppel
+                                              : AppColors.paynesGray,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-
-                      // 🔹 INFO DEL USUARIO
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _isLoggedIn ? Colors.green[50] : Colors.orange[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: _isLoggedIn ? Colors.green[100]! : Colors.orange[100]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _isLoggedIn ? Icons.person : Icons.warning,
-                              color: _isLoggedIn ? Colors.green[700] : Colors.orange[700],
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _isLoggedIn
-                                    ? "Conectado como: $_userName"
-                                    : "Inicia sesión para agregar productos al carrito",
-                                style: TextStyle(
-                                  color: _isLoggedIn ? Colors.green[700] : Colors.orange[700],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ],
         ),
       ),
       bottomNavigationBar: SafeArea(
+        top: false,
         child: CustomFooterNav(
           currentIndex: _selectedIndex,
           onTap: (index) {

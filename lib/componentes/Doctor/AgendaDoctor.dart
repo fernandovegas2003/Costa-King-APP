@@ -9,6 +9,53 @@ import 'Paciente.dart';
 import 'HistoriaClinica.dart';
 import 'Autorizaciones.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontFamily: _fontFamily,
+  );
+}
+
+
 class AgendaDoctorPage extends StatefulWidget {
   const AgendaDoctorPage({Key? key}) : super(key: key);
 
@@ -38,30 +85,29 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
       });
       _cargarCitasPorFecha();
     } else {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se encontró información del doctor")),
-      );
+      setState(() => _isLoading = false);
+      _showSnack("No se encontró información del doctor", isError: true);
     }
   }
 
   Future<void> _cargarCitasPorFecha() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final response = await http.get(
         Uri.parse(
             "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/doctor/$_cedulaMedico"),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         setState(() {
-          _citasPendientes = decoded["data"] ?? [];
+          final String fechaFiltro = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
+          _citasPendientes = (decoded["data"] ?? []).where((cita) {
+            final fechaCita = cita["fechaHora"]?.substring(0, 10);
+            return fechaCita == fechaFiltro;
+          }).toList();
           _isLoading = false;
         });
       } else {
@@ -69,12 +115,16 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
           _citasPendientes = [];
           _isLoading = false;
         });
+        _showSnack("Error al cargar citas: ${response.body}", isError: true);
       }
     } catch (e) {
-      setState(() {
-        _citasPendientes = [];
-        _isLoading = false;
-      });
+      if(mounted) {
+        setState(() {
+          _citasPendientes = [];
+          _isLoading = false;
+        });
+        _showSnack("Error de conexión: $e", isError: true);
+      }
     }
   }
 
@@ -86,50 +136,33 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
         headers: {"Content-Type": "application/json"},
       );
 
-      if (response.statusCode == 200) {
-        // ✅ Cita finalizada con éxito
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cita finalizada con éxito")),
-        );
+      if (!mounted) return;
 
-        // 🔹 Ahora generamos la factura desde la cita
+      if (response.statusCode == 200) {
+        _showSnack("Cita finalizada con éxito");
+
         try {
           final facturaResponse = await http.post(
             Uri.parse(
                 "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/facturas/generar-desde-cita/$idCita"),
             headers: {"Content-Type": "application/json"},
           );
-
           if (facturaResponse.statusCode == 200) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Factura generada correctamente")),
-            );
+            _showSnack("Factura generada correctamente");
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      "Error al generar factura: ${facturaResponse.body}")),
-            );
+            _showSnack("Error al generar factura: ${facturaResponse.body}", isError: true);
           }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error al generar factura: $e")),
-          );
+          _showSnack("Error al generar factura: $e", isError: true);
         }
-
-        // 🔁 Recargar citas
         _cargarCitasPorFecha();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al finalizar cita: ${response.body}")),
-        );
+        _showSnack("Error al finalizar cita: ${response.body}", isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error al finalizar cita: $e")));
+      _showSnack("Error al finalizar cita: $e", isError: true);
     }
   }
-
 
   Future<void> _cancelarCita(int idCita) async {
     try {
@@ -139,20 +172,15 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"motivoCancelacion": "Cancelada por el médico"}),
       );
-
+      if (!mounted) return;
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cita cancelada con éxito")),
-        );
+        _showSnack("Cita cancelada con éxito");
         _cargarCitasPorFecha();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al cancelar cita: ${response.body}")),
-        );
+        _showSnack("Error al cancelar cita: ${response.body}", isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error al cancelar cita: $e")));
+      _showSnack("Error al cancelar cita: $e", isError: true);
     }
   }
 
@@ -162,6 +190,23 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
       initialDate: _fechaSeleccionada,
       firstDate: DateTime(2023),
       lastDate: DateTime(2026),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.keppel,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.paynesGray,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.keppel,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (fecha != null) {
@@ -174,12 +219,8 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
 
   String? _obtenerDocumentoPaciente(Map<String, dynamic> cita) {
     const posibles = [
-      'idPaciente',
-      'documentoPaciente',
-      'numeroDocumentoPaciente',
-      'cedulaPaciente',
-      'cedula',
-      'documento'
+      'idPaciente', 'documentoPaciente', 'numeroDocumentoPaciente',
+      'cedulaPaciente', 'cedula', 'documento'
     ];
     for (final key in posibles) {
       final value = cita[key];
@@ -193,10 +234,10 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
     if (cita['idCita'] != null) {
       await prefs.setInt('idCita', cita['idCita']);
     }
-
     final nombreCompleto =
-    "${cita['nombrePaciente'] ?? 'Paciente'} ${cita['apellidoPaciente'] ?? ''}".trim();
-
+        "${cita['nombrePaciente'] ?? 'Paciente'} ${cita['apellidoPaciente'] ?? ''}".trim();
+    
+    if(!mounted) return;
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -206,16 +247,13 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
         ),
       ),
     );
-
     if (resultado == true) _cargarCitasPorFecha();
   }
 
   void _navegarAPaciente(Map<String, dynamic> cita) {
     final documento = _obtenerDocumentoPaciente(cita);
     if (documento == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se encontró documento del paciente.')),
-      );
+      _showSnack('No se encontró documento del paciente.', isError: true);
       return;
     }
     Navigator.push(
@@ -228,34 +266,28 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const OrdenMedicaPage(), // ✅ sin parámetros
+        builder: (context) => const OrdenMedicaPage(),
       ),
     );
-
     if (resultado == true) _cargarCitasPorFecha();
   }
-
 
   void _verHistoriaClinica(Map<String, dynamic> cita) async {
     final idCita = cita['idCita'];
     if (idCita == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se encontró ID de la cita.")),
-      );
+      _showSnack("No se encontró ID de la cita.", isError: true);
       return;
     }
-
     try {
       final response = await http.get(
         Uri.parse(
           "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/$idCita",
         ),
       );
-
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final idPaciente = data['data']?['idUsuarioCC'] ?? data['data']?['idPaciente'];
-
         if (idPaciente != null) {
           Navigator.push(
             context,
@@ -266,247 +298,234 @@ class _AgendaDoctorPageState extends State<AgendaDoctorPage> {
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("No se encontró el paciente en la cita.")),
-          );
+          _showSnack("No se encontró el paciente en la cita.", isError: true);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al obtener la cita: ${response.body}")),
-        );
+        _showSnack("Error al obtener la cita: ${response.body}", isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error de conexión: $e")),
-      );
+      _showSnack("Error de conexión: $e", isError: true);
     }
   }
 
+  void _showSnack(String msg, {bool isError = false}) {
+      ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.red[700] : AppColors.keppel,
+      ),
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          "Agenda de citas",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.paynesGray),
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        title: Text(
+          "Agenda de citas",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today),
+            icon: const Icon(Icons.calendar_today, color: AppColors.paynesGray),
             onPressed: _seleccionarFecha,
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset("assets/images/Fondo.png", fit: BoxFit.cover),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Column(
+        ),
+        child: SafeArea(
+          child: Column(
             children: [
-              const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Fecha: ${DateFormat('dd/MM/yyyy').format(_fechaSeleccionada)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      DateFormat('dd/MM/yyyy').format(_fechaSeleccionada),
+                      style: AppTextStyles.headline.copyWith(fontSize: 18),
                     ),
                     ElevatedButton(
                       onPressed: _seleccionarFecha,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.teal,
+                        backgroundColor: AppColors.aquamarine,
+                        foregroundColor: AppColors.paynesGray,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
-                      child: const Text("Cambiar"),
+                      child: Text("Cambiar", style: AppTextStyles.button.copyWith(fontSize: 14)),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+
               Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _citasPendientes.isEmpty
-                      ? const Center(
-                    child: Text(
-                      "No hay citas pendientes para esta fecha",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  )
-                      : ListView.builder(
-                    itemCount: _citasPendientes.length,
-                    itemBuilder: (context, index) {
-                      final Map<String, dynamic> cita =
-                      Map<String, dynamic>.from(_citasPendientes[index]);
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${cita['nombrePaciente'] ?? 'N/A'}",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "Servicio: ${cita['servicio'] ?? 'No especificado'}",
-                                style:
-                                const TextStyle(color: Colors.grey),
-                              ),
-                              const Divider(),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 4,
-                                alignment: WrapAlignment.end,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () => _navegarAAtencion(cita),
-                                    icon: const Icon(Icons.healing_outlined, color: Colors.orange),
-                                    label: const Text(
-                                      "Atender",
-                                      style: TextStyle(color: Colors.orange),
-                                    ),
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator(color: AppColors.aquamarine))
+                    : _citasPendientes.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.calendar_month_outlined, size: 60, color: AppColors.paynesGray.withOpacity(0.3)),
+                                SizedBox(height: 16),
+                                Text(
+                                  "No hay citas pendientes para esta fecha",
+                                  style: AppTextStyles.body.copyWith(color: AppColors.paynesGray.withOpacity(0.7)),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _citasPendientes.length,
+                            itemBuilder: (context, index) {
+                              final Map<String, dynamic> cita =
+                                  Map<String, dynamic>.from(_citasPendientes[index]);
+                              
+                              return Card(
+                                color: AppColors.white.withOpacity(0.7),
+                                margin: const EdgeInsets.only(bottom: 15),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${cita['nombrePaciente'] ?? 'N/A'}",
+                                        style: AppTextStyles.cardTitle,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        "Servicio: ${cita['servicio'] ?? 'No especificado'}",
+                                        style: AppTextStyles.cardDescription.copyWith(color: AppColors.paynesGray.withOpacity(0.7)),
+                                      ),
+                                      Text(
+                                        "Hora: ${DateFormat('hh:mm a').format(DateTime.parse(cita['fechaHora']))}",
+                                        style: AppTextStyles.cardDescription,
+                                      ),
+                                      Divider(color: AppColors.keppel.withOpacity(0.5), height: 20),
+                                      
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        alignment: WrapAlignment.start,
+                                        children: [
+                                          _buildActionButton(
+                                            "Atender",
+                                            Icons.healing_outlined,
+                                            Colors.orange[800]!,
+                                            () => _navegarAAtencion(cita)
+                                          ),
+                                          _buildActionButton(
+                                            "Finalizar",
+                                            Icons.check_circle_outline,
+                                            Colors.green[700]!,
+                                            () => _finalizarCita(cita['idCita'])
+                                          ),
+                                          _buildActionButton(
+                                            "Cancelar",
+                                            Icons.cancel_outlined,
+                                            Colors.red[700]!,
+                                            () => _cancelarCita(cita['idCita'])
+                                          ),
+                                          _buildActionButton(
+                                            "Orden Médica",
+                                            Icons.assignment_add,
+                                            AppColors.keppel,
+                                            () => _navegarAOrdenMedica(cita)
+                                          ),
+                                          _buildActionButton(
+                                            "Ver historia",
+                                            Icons.history_edu_outlined,
+                                            AppColors.paynesGray,
+                                            () => _verHistoriaClinica(cita)
+                                          ),
+                                          _buildActionButton(
+                                            "Autorizaciones",
+                                            Icons.verified_user_outlined,
+                                            AppColors.keppel,
+                                            () async {
+                                              final idCita = cita['idCita'];
+                                              if (idCita == null) {
+                                                _showSnack("No se encontró el ID de la cita.", isError: true);
+                                                return;
+                                              }
+                                              try {
+                                                final response = await http.get(
+                                                  Uri.parse("https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/$idCita"),
+                                                );
+                                                if (response.statusCode == 200) {
+                                                  final data = jsonDecode(response.body);
+                                                  final idPaciente = data['data']?['idPaciente'] ?? data['data']?['idUsuarioCC'];
+                                                  if (idPaciente != null) {
+                                                    final prefs = await SharedPreferences.getInstance();
+                                                    await prefs.setInt('idPacienteSeleccionado', int.tryParse(idPaciente.toString()) ?? 0);
+                                                    if(mounted) {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => const VerAutorizacionesPage(),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } else {
+                                                    _showSnack("No se encontró el paciente en la cita.", isError: true);
+                                                  }
+                                                } else {
+                                                  _showSnack("Error al obtener datos de la cita: ${response.body}", isError: true);
+                                                }
+                                              } catch (e) {
+                                                _showSnack("Error de conexión: $e", isError: true);
+                                              }
+                                            }
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                  TextButton.icon(
-                                    onPressed: () => _finalizarCita(cita['idCita']),
-                                    icon: const Icon(Icons.check_circle_outline, color: Colors.green),
-                                    label: const Text(
-                                      "Finalizar",
-                                      style: TextStyle(color: Colors.green),
-                                    ),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () => _cancelarCita(cita['idCita']),
-                                    icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                                    label: const Text(
-                                      "Cancelar",
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () => _navegarAOrdenMedica(cita),
-                                    icon: const Icon(Icons.assignment_add, color: Colors.blue),
-                                    label: const Text(
-                                      "Orden Médica",
-                                      style: TextStyle(color: Colors.blue),
-                                    ),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () => _verHistoriaClinica(cita),
-                                    icon: const Icon(Icons.history_edu, color: Colors.purple),
-                                    label: const Text(
-                                      "Ver historia",
-                                      style: TextStyle(color: Colors.purple),
-                                    ),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () async {
-                                      final idCita = cita['idCita'];
-
-                                      if (idCita == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("No se encontró el ID de la cita.")),
-                                        );
-                                        return;
-                                      }
-
-                                      try {
-                                        // 🔹 Llamada al endpoint /api/citas/{idCita}
-                                        final response = await http.get(
-                                          Uri.parse("https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas/$idCita"),
-                                        );
-
-                                        if (response.statusCode == 200) {
-                                          final data = jsonDecode(response.body);
-
-                                          // 🔹 Intentamos obtener el idPaciente o idUsuarioCC
-                                          final idPaciente = data['data']?['idPaciente'] ?? data['data']?['idUsuarioCC'];
-
-                                          if (idPaciente != null) {
-                                            // 🔹 Guardamos el ID en SharedPreferences
-                                            final prefs = await SharedPreferences.getInstance();
-                                            await prefs.setInt('idPacienteSeleccionado', int.tryParse(idPaciente.toString()) ?? 0);
-
-                                            // 🔹 Navegamos a la página de Autorizaciones
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const VerAutorizacionesPage(),
-                                              ),
-                                            );
-                                          } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("No se encontró el paciente en la cita.")),
-                                            );
-                                          }
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text("Error al obtener datos de la cita: ${response.body}")),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text("Error de conexión: $e")),
-                                        );
-                                      }
-                                    },
-                                    icon: const Icon(Icons.verified_user_outlined, color: Colors.teal),
-                                    label: const Text(
-                                      "Autorizaciones",
-                                      style: TextStyle(color: Colors.teal),
-                                    ),
-                                  ),
-
-
-
-                                ],
-                              ),
-
-                            ],
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
               ),
             ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: color, size: 18),
+      label: Text(
+        label,
+        style: AppTextStyles.body.copyWith(color: color, fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

@@ -1,10 +1,52 @@
-import 'package:flutter/material.dart';
-import '../widget/appScalfod.dart';
+import 'package:flutter/material.dart'; 
+import '../widget/appScalfod.dart'; 
 import 'DashboardService.dart';
 import '../widget/StatsCard.dart';
 import '../widget/ChartCitasMes.dart';
 import '../widget/ChartEspecialidades.dart';
 import '../widget/ChartIngresosSedes.dart';
+
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp'; 
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel, // 🎨 Color
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray, // 🎨 Color
+    fontSize: 14,
+    fontFamily: _fontFamily,
+  );
+}
 
 class DashboardAdminPage extends StatefulWidget {
   const DashboardAdminPage({super.key});
@@ -25,16 +67,18 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
     _tabController = TabController(length: 4, vsync: this);
   }
 
+
   Widget _whiteCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.white), 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.paynesGray.withOpacity(0.1), 
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -51,9 +95,34 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
       body: FutureBuilder<Map<String, dynamic>>(
         future: dashboardFuture,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00A5A5)),
+          if (snapshot.connectionState == ConnectionState.waiting) {
+           
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: AppColors.aquamarine,
+                  ), // 🎨 Color
+                  SizedBox(height: 16),
+                  Text(
+                    "Cargando Dashboard...",
+                    style: AppTextStyles.body,
+                  ), // 🎨 Estilo
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.hasError || !snapshot.hasData) {
+          
+            return Center(
+              child: Text(
+                "Error al cargar el dashboard: ${snapshot.error}",
+                style: AppTextStyles.body.copyWith(
+                  color: Colors.red[700],
+                ), 
+              ),
             );
           }
 
@@ -66,20 +135,32 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
 
           return Column(
             children: [
-              const SizedBox(height: 12), // 🔹 separa el Tab del header
+              const SizedBox(height: 12), 
+          
               Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                ), 
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(
-                    16,
-                  ), // ← 🔹 Borde redondeado
+                  color: AppColors.white.withOpacity(0.5), 
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: TabBar(
                   controller: _tabController,
-                  labelColor: const Color(0xFF00A5A5),
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: const Color(0xFF00A5A5),
+                  labelColor: AppColors.keppel,
+                  unselectedLabelColor: AppColors.paynesGray.withOpacity(
+                    0.7,
+                  ), 
+                  indicatorColor: AppColors.keppel, 
                   indicatorWeight: 3,
+                  labelStyle: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ), 
+                  unselectedLabelStyle: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                  ),
                   tabs: const [
                     Tab(text: "General"),
                     Tab(text: "Citas"),
@@ -101,22 +182,22 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
                         StatsCard(
                           title: "Usuarios activos",
                           value: "${general["total_usuarios_activos"]}",
-                          icon: Icons.people,
+                          icon: Icons.people_outline,
                         ),
                         StatsCard(
                           title: "Pacientes",
                           value: "${general["total_pacientes"]}",
-                          icon: Icons.personal_injury,
+                          icon: Icons.personal_injury_outlined,
                         ),
                         StatsCard(
                           title: "Médicos activos",
                           value: "${general["total_medicos_activos"]}",
-                          icon: Icons.local_hospital,
+                          icon: Icons.local_hospital_outlined,
                         ),
                         StatsCard(
                           title: "Ingresos del mes",
                           value: "\$${general["ingresos_mes_actual"]}",
-                          icon: Icons.attach_money,
+                          icon: Icons.attach_money_outlined,
                         ),
                       ],
                     ),
@@ -126,24 +207,27 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
                       padding: const EdgeInsets.all(16),
                       children: [
                         _whiteCard(
+                          
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                "Citas por Mes",
+                                style: AppTextStyles.cardTitle,
+                              ), 
                               const SizedBox(height: 10),
                               ChartCitasMes(citasPorMes: citasPorMes),
                             ],
                           ),
                         ),
                         _whiteCard(
+                         
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Ranking de especialidades",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
+                                style: AppTextStyles.cardTitle, // 
                               ),
                               const SizedBox(height: 10),
                               ChartEspecialidades(
@@ -163,15 +247,14 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Ingresos por sede (en miles)",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
+                                style: AppTextStyles.cardTitle, 
                               ),
                               const SizedBox(height: 10),
-                              ChartIngresosSedes( ingresosSedeEspecialidad: ingresos,),
+                              ChartIngresosSedes(
+                                ingresosSedeEspecialidad: ingresos,
+                              ),
                             ],
                           ),
                         ),
@@ -184,33 +267,38 @@ class _DashboardAdminPageState extends State<DashboardAdminPage>
                       itemCount: medicos.length,
                       itemBuilder: (context, i) {
                         final m = medicos[i];
+                        
                         return Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white.withOpacity(0.7), // 
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: AppColors.white,
+                            ), // 
                           ),
                           margin: const EdgeInsets.only(bottom: 10),
                           child: ListTile(
-                            leading: const Icon(
-                              Icons.person,
-                              color: Color(0xFF00A5A5),
+                            leading: Icon(
+                              Icons.person_outline,
+                              color: AppColors.keppel, //
                             ),
-                            title: Text(m["nombre_completo"]),
+                            title: Text(
+                              m["nombre_completo"],
+                              style: AppTextStyles.cardDescription.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ), // 
                             subtitle: Text(
                               "Especialidad: ${m["nombreEspecialidad"]}",
+                              style: AppTextStyles.cardDescription.copyWith(
+                                color: AppColors.paynesGray.withOpacity(0.8),
+                              ), // 
                             ),
                             trailing: Text(
                               "Tasa: ${m["tasa_completacion"] ?? 0}%",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTextStyles.cardTitle.copyWith(
+                                fontSize: 14,
+                              ), //
                             ),
                           ),
                         );

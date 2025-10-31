@@ -28,7 +28,7 @@ class _ChartCitasMesState extends State<ChartCitasMes> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 Filtrar por año
+   
     final data = widget.citasPorMes
         .where((e) => e["mes"].toString().startsWith(anioSeleccionado.toString()))
         .toList()
@@ -41,7 +41,7 @@ class _ChartCitasMesState extends State<ChartCitasMes> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 🔹 Fila con título y selector de año
+      
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
@@ -68,7 +68,7 @@ class _ChartCitasMesState extends State<ChartCitasMes> {
         ),
         const SizedBox(height: 10),
 
-        // 🔹 Contenedor principal (card única)
+       
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -133,12 +133,11 @@ class _ChartCitasMesState extends State<ChartCitasMes> {
                   );
                 }),
               ),
-              swapAnimationDuration: Duration.zero, // 👈 Evita lag y freezing
+              swapAnimationDuration: Duration.zero,
             ),
           ),
         ),
-
-        // 🔹 Etiquetas de valores sobre cada barra
+      
         const SizedBox(height: 8),
         Wrap(
           alignment: WrapAlignment.center,

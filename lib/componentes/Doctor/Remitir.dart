@@ -1,10 +1,59 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontFamily: _fontFamily,
+  );
+}
 
 class RemitirPage extends StatefulWidget {
-  final int idPaciente; // <- id del paciente
-  final int idRegistroConsulta; // <- requerido por ORDENES_MEDICAS
+  final int idPaciente;
+  final int idRegistroConsulta;
   final String nombrePaciente;
 
   const RemitirPage({
@@ -19,6 +68,7 @@ class RemitirPage extends StatefulWidget {
 }
 
 class _RemitirPageState extends State<RemitirPage> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _diagnosticoController = TextEditingController();
   final TextEditingController _observacionesController =
       TextEditingController();
@@ -27,8 +77,7 @@ class _RemitirPageState extends State<RemitirPage> {
   bool _cargando = true;
   bool _guardando = false;
 
-  // Estructuras visuales
-  Map<String, dynamic> _pacienteUI = {}; // valores ya listos para mostrar
+  Map<String, dynamic> _pacienteUI = {};
 
   @override
   void initState() {
@@ -43,7 +92,6 @@ class _RemitirPageState extends State<RemitirPage> {
     super.dispose();
   }
 
-  // Utilidad: calcular edad desde fecha (yyyy-MM-dd)
   String _calcularEdad(String? fechaNacimiento) {
     if (fechaNacimiento == null || fechaNacimiento.isEmpty) return 'N/A';
     try {
@@ -66,30 +114,27 @@ class _RemitirPageState extends State<RemitirPage> {
   }
 
   Future<void> _cargarDatosPaciente() async {
-    setState(() {
-      _cargando = true;
-    });
-
+    setState(() => _cargando = true);
     try {
       final url = Uri.parse(
         "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/historias-clinicas/historial-completo/${widget.idPaciente}",
       );
 
       final resp = await http.get(url);
+      if (!mounted) return;
+
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body);
         final data = (decoded is Map && decoded['data'] is Map)
             ? Map<String, dynamic>.from(decoded['data'])
             : <String, dynamic>{};
 
-        // Soporte para data.paciente o data.usuario (según cómo venga del back)
         final rawPaciente = (data['paciente'] is Map)
             ? Map<String, dynamic>.from(data['paciente'])
             : (data['usuario'] is Map)
             ? Map<String, dynamic>.from(data['usuario'])
             : <String, dynamic>{};
 
-        // Normalización a nombres de la BD
         final nombre =
             rawPaciente['nombreUsuario'] ?? rawPaciente['nombre'] ?? '';
         final apellido =
@@ -119,41 +164,27 @@ class _RemitirPageState extends State<RemitirPage> {
           _cargando = false;
         });
       } else {
-        setState(() {
-          _cargando = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar datos: ${resp.statusCode}')),
-        );
+        setState(() => _cargando = false);
+        _showSnack('Error al cargar datos: ${resp.statusCode}', isError: true);
       }
     } catch (e) {
-      setState(() {
-        _cargando = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        setState(() => _cargando = false);
+        _showSnack('Error: $e', isError: true);
+      }
     }
   }
 
   Future<void> _guardarOrdenMedica() async {
-    final descripcion = _diagnosticoController.text.trim();
-    if (descripcion.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor complete el campo de diagnostico'),
-        ),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _guardando = true);
 
     try {
       final body = {
         "idRegistroConsulta": widget.idRegistroConsulta,
-        "tipoOrden": "Examen", // Puedes parametrizarlo si quieres
-        "descripcion": descripcion,
+        "tipoOrden": "Examen",
+        "descripcion": _diagnosticoController.text.trim(),
         "fechaVencimiento": _fechaVencimiento.toString().split(' ').first,
         "observaciones": _observacionesController.text.trim(),
       };
@@ -166,12 +197,11 @@ class _RemitirPageState extends State<RemitirPage> {
         body: jsonEncode(body),
       );
 
+      if (!mounted) return;
       setState(() => _guardando = false);
 
       if (resp.statusCode == 201 || resp.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Remision guardada con exito')),
-        );
+        _showSnack('Remisión guardada con exito');
         Navigator.pop(context, true);
       } else {
         String msg = 'Error desconocido';
@@ -181,205 +211,256 @@ class _RemitirPageState extends State<RemitirPage> {
               ? e['message'].toString()
               : msg;
         } catch (_) {}
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $msg')));
+        _showSnack('Error: $msg', isError: true);
       }
     } catch (e) {
-      setState(() => _guardando = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al guardar remision: $e')));
+      if (mounted) {
+        setState(() => _guardando = false);
+        _showSnack('Error al guardar remision: $e', isError: true);
+      }
     }
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? Colors.red[700]
+            : AppColors.keppel,
+      ),
+    );
+  }
+
+  Future<void> _seleccionarFecha() async {
+    DateTime? fecha = await showDatePicker(
+      context: context,
+      initialDate: _fechaVencimiento,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.keppel,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.paynesGray,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.keppel,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (fecha != null) {
+      setState(() => _fechaVencimiento = fecha);
+    }
+  }
+
+  InputDecoration _formFieldDecoration(String label, {IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: AppTextStyles.body.copyWith(
+        color: AppColors.paynesGray.withAlpha(179),
+      ),
+      prefixIcon: icon != null
+          ? Icon(icon, color: AppColors.paynesGray, size: 20)
+          : null,
+      filled: true,
+      fillColor: AppColors.white.withAlpha(204),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(
+          color: AppColors.keppel.withAlpha(128),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(
+          color: AppColors.keppel.withAlpha(128),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(
+          color: AppColors.keppel,
+          width: 2,
+        ),
+      ),
+      errorStyle: TextStyle(
+        color: Colors.red[700],
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "Remitir",
-          style: TextStyle(color: Color(0xFF00BCD4)),
-        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF00BCD4)),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
+        title: Text(
+          "Remitir",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
       ),
-      body: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFE0F7FA), Color(0xFF007A7A)],
-                ),
-              ),
-              child: ListView(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: _cargando
+            ? Center(
+                child: CircularProgressIndicator(color: AppColors.aquamarine),
+              )
+            : ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  // Encabezado con el paciente
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          AppColors.keppel,
+                          AppColors.paynesGray,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Text(
                       widget.nombrePaciente.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: AppTextStyles.headline.copyWith(
+                        color: AppColors.white,
                         fontSize: 22,
-                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
+                  const SizedBox(height: 16),
 
-                  // Tarjeta principal
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.white),
                     ),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Perfil del Paciente:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                            style: AppTextStyles.cardTitle,
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            _pacienteUI['nombreCompleto'] ?? '',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
+                          _buildInfoRow(
+                            "Documento:",
+                            "CC ${_pacienteUI['documento'] ?? ''}",
                           ),
-                          const SizedBox(height: 14),
-
-                          const Text(
-                            "Información Personal:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                          _buildInfoRow(
+                            "Edad:",
+                            "${_pacienteUI['edad'] ?? 'N/A'} años",
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Documento: CC ${_pacienteUI['documento'] ?? ''}",
-                            style: const TextStyle(color: Colors.grey),
+                          _buildInfoRow(
+                            "Género:",
+                            _pacienteUI['genero'] ?? 'N/A',
                           ),
-                          Text(
-                            "Edad: ${_pacienteUI['edad'] ?? 'N/A'} años",
-                            style: const TextStyle(color: Colors.grey),
+                          _buildInfoRow(
+                            "Teléfono:",
+                            _pacienteUI['telefono'] ?? 'N/A',
                           ),
-                          Text(
-                            "Género: ${_pacienteUI['genero'] ?? 'N/A'}",
-                            style: const TextStyle(color: Colors.grey),
+                          _buildInfoRow(
+                            "Ciudad:",
+                            _pacienteUI['ciudad'] ?? 'N/A',
                           ),
-                          Text(
-                            "Teléfono: ${_pacienteUI['telefono'] ?? 'N/A'}",
-                            style: const TextStyle(color: Colors.grey),
+                          _buildInfoRow(
+                            "Historia No:",
+                            _pacienteUI['idHistoriaClinica'],
                           ),
-                          Text(
-                            "Ciudad: ${_pacienteUI['ciudad'] ?? 'N/A'}",
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 14),
-
-                          const Text(
-                            "Datos Clínicos:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Historia Clínica No: ${_pacienteUI['idHistoriaClinica']}",
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            "Fecha: ${_pacienteUI['fechaCreacion']}",
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            "Tipo de Sangre: ${_pacienteUI['tipoSangre']}",
-                            style: const TextStyle(color: Colors.grey),
+                          _buildInfoRow(
+                            "Tipo Sangre:",
+                            _pacienteUI['tipoSangre'],
                           ),
 
-                          const Divider(height: 24),
+                          Divider(
+                            color: AppColors.keppel.withOpacity(0.5),
+                            height: 24,
+                            thickness: 1,
+                          ),
 
-                          const Text(
-                            "Remision / Orden:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                          Text(
+                            "Remisión / Orden:",
+                            style: AppTextStyles.cardTitle,
+                          ),
+                          const SizedBox(height: 16),
+
+                          TextFormField(
+                            controller: _diagnosticoController,
+                            style: AppTextStyles.body,
+                            maxLines: 3,
+                            decoration: _formFieldDecoration(
+                              "Descripción (diagnóstico / motivo)",
+                            ),
+                            validator: (v) =>
+                                (v == null || v.isEmpty) ? "Requerido" : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _observacionesController,
+                            style: AppTextStyles.body,
+                            maxLines: 2,
+                            decoration: _formFieldDecoration(
+                              "Observaciones (opcional)",
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
 
-                          // Descripción (diagnóstico / motivo)
-                          _boxedField(
-                            child: TextField(
-                              controller: _diagnosticoController,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                hintText:
-                                    "Descripción del examen / motivo de remision",
-                                border: InputBorder.none,
-                              ),
+                          TextFormField(
+                            controller: TextEditingController(
+                              text: DateFormat(
+                                'dd/MM/yyyy',
+                              ).format(_fechaVencimiento),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Observaciones
-                          _boxedField(
-                            child: TextField(
-                              controller: _observacionesController,
-                              maxLines: 2,
-                              decoration: const InputDecoration(
-                                hintText: "Observaciones (opcional)",
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Fecha de vencimiento
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text("Fecha de vencimiento"),
-                            subtitle: Text(
-                              _fechaVencimiento.toString().split(' ').first,
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _fechaVencimiento,
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime.now().add(
-                                    const Duration(days: 365),
+                            readOnly: true,
+                            style: AppTextStyles.body,
+                            decoration:
+                                _formFieldDecoration(
+                                  "Fecha de Vencimiento",
+                                ).copyWith(
+                                  prefixIcon: Icon(
+                                    Icons.calendar_today_outlined,
+                                    color: AppColors.paynesGray,
+                                    size: 20,
                                   ),
-                                );
-                                if (picked != null) {
-                                  setState(() => _fechaVencimiento = picked);
-                                }
-                              },
-                            ),
+                                ),
+                            onTap: _seleccionarFecha,
                           ),
+                          const SizedBox(height: 30),
 
-                          const SizedBox(height: 20),
-
-                          // Botón Guardar
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -387,27 +468,32 @@ class _RemitirPageState extends State<RemitirPage> {
                                   ? null
                                   : _guardarOrdenMedica,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF80DEEA),
+                                backgroundColor:
+                                    AppColors.aquamarine,
+                                foregroundColor:
+                                    AppColors.paynesGray,
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
+                                  vertical: 16,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(
+                                    30,
+                                  ),
                                 ),
                               ),
                               child: _guardando
                                   ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.paynesGray,
+                                          strokeWidth: 3,
+                                        ),
+                                      )
+                                  : Text(
+                                        "Guardar",
+                                        style: AppTextStyles.button,
                                       ),
-                                    )
-                                  : const Text(
-                                      "Guardar",
-                                      style: TextStyle(fontSize: 18),
-                                    ),
                             ),
                           ),
                         ],
@@ -416,18 +502,38 @@ class _RemitirPageState extends State<RemitirPage> {
                   ),
                 ],
               ),
-            ),
+      ),
     );
   }
 
-  Widget _boxedField({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
-        borderRadius: BorderRadius.circular(8),
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: AppTextStyles.body.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.paynesGray.withAlpha(204),
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.body.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(12),
-      child: child,
     );
   }
 }

@@ -5,11 +5,59 @@ import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 import 'DiagnosticoAlternativa.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 12,
+    fontFamily: _fontFamily,
+  );
+}
+
 class SintomasAlternativaPage extends StatefulWidget {
   const SintomasAlternativaPage({super.key});
 
   @override
-  State<SintomasAlternativaPage> createState() => _SintomasAlternativaPageState();
+  State<SintomasAlternativaPage> createState() =>
+      _SintomasAlternativaPageState();
 }
 
 class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
@@ -60,27 +108,38 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.amber),
-            SizedBox(width: 8),
-            Text("Aviso Médico"),
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange[800],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Aviso Médico",
+              style: AppTextStyles.headline.copyWith(fontSize: 20),
+            ),
           ],
         ),
-        content: const Text(
+        content: Text(
           "Los resultados son orientativos y no reemplazan una evaluación médica profesional.\n\n"
-              "Si los síntomas persisten o empeoran, acude a consulta con un especialista.",
-          style: TextStyle(fontSize: 15),
+          "Si los síntomas persisten o empeoran, acude a consulta con un especialista.",
+          style: AppTextStyles.body.copyWith(fontSize: 15),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar", style: TextStyle(color: Colors.red)),
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006D73),
+              backgroundColor: AppColors.aquamarine,
+              foregroundColor: AppColors.paynesGray,
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -94,7 +153,10 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
                 ),
               );
             },
-            child: const Text("Continuar"),
+            child: const Text(
+              "Continuar",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -104,164 +166,173 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FDFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Header con estilo farmacia
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF006D73),
-                    const Color(0xFF00A5A5),
-                  ],
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.keppel,
+                      AppColors.paynesGray,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
+                  ),
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.eco_outlined,
+                            color: AppColors.white,
+                            size: 30,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.medical_services,
-                          color: Colors.white,
-                          size: 30,
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Medicina Alternativa",
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              Text(
+                                "Diagnóstico con remedios naturales",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Selección Múltiple de Síntomas",
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: cargando
+                    ? Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "Medicina Alternativa",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.aquamarine,
                               ),
                             ),
+                            SizedBox(height: 16),
                             Text(
-                              "Selecciona tus síntomas para diagnóstico natural",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
+                              "Cargando síntomas disponibles...",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray,
                               ),
                             ),
                           ],
                         ),
+                      )
+                    : sintomasPorCategoria.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 50,
+                              color: AppColors.paynesGray.withOpacity(0.5),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "No se encontraron síntomas disponibles.",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _buildDuracionCard(),
+                            const SizedBox(height: 20),
+
+                            _buildContadorSintomas(),
+                            const SizedBox(height: 16),
+
+                            ...sintomasPorCategoria.entries.map((entry) {
+                              return _buildCategoriaCard(
+                                entry.key,
+                                entry.value,
+                              );
+                            }),
+                            const SizedBox(height: 20),
+
+                            _buildBotonDiagnostico(),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Diagnóstico con Remedios Naturales",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ),
 
-            // 🔹 Contenido principal
-            Expanded(
-              child: cargando
-                  ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006D73)),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      "Cargando síntomas disponibles...",
-                      style: TextStyle(
-                        color: Color(0xFF006D73),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : sintomasPorCategoria.isEmpty
-                  ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 50, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      "No se encontraron síntomas disponibles.",
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
-                ),
-              )
-                  : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // 🔹 Selector de duración
-                    _buildDuracionCard(),
-
-                    const SizedBox(height: 20),
-
-                    // 🔹 Contador de síntomas seleccionados
-                    _buildContadorSintomas(),
-
-                    const SizedBox(height: 16),
-
-                    // 🔹 Lista de categorías de síntomas
-                    ...sintomasPorCategoria.entries.map((entry) {
-                      return _buildCategoriaCard(entry.key, entry.value);
-                    }),
-
-                    const SizedBox(height: 20),
-
-                    // 🔹 Botón de acción
-                    _buildBotonDiagnostico(),
-                  ],
-                ),
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() => _selectedIndex = index);
+                },
               ),
-            ),
-
-            // 🔹 Footer
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() => _selectedIndex = index);
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -272,31 +343,24 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.calendar_today, color: Color(0xFF006D73), size: 24),
+              Icon(
+                Icons.calendar_today_outlined,
+                color: AppColors.keppel,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(
                 "Duración de los Síntomas",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006D73),
-                ),
+                style: AppTextStyles.cardTitle,
               ),
             ],
           ),
@@ -306,8 +370,8 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
             max: 14,
             divisions: 13,
             value: duracionDias,
-            activeColor: const Color(0xFF00A5A5),
-            inactiveColor: Colors.grey[300],
+            activeColor: AppColors.aquamarine,
+            inactiveColor: AppColors.keppel.withOpacity(0.3),
             label: "${duracionDias.toInt()} días",
             onChanged: (val) {
               setState(() => duracionDias = val);
@@ -319,18 +383,23 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
             children: [
               Text(
                 "1 día",
-                style: TextStyle(color: Colors.grey[600]),
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.paynesGray.withOpacity(0.7),
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Color(0xFF006D73),
+                  color: AppColors.keppel,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  "${duracionDias.toInt()} días seleccionados",
-                  style: TextStyle(
-                    color: Colors.white,
+                  "${duracionDias.toInt()} ${duracionDias.toInt() == 1 ? 'día' : 'días'} seleccionados",
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -338,7 +407,9 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
               ),
               Text(
                 "14 días",
-                style: TextStyle(color: Colors.grey[600]),
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.paynesGray.withOpacity(0.7),
+                ),
               ),
             ],
           ),
@@ -348,14 +419,19 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
   }
 
   Widget _buildContadorSintomas() {
+    bool isEmpty = sintomasSeleccionados.isEmpty;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: sintomasSeleccionados.isEmpty ? Colors.grey[100] : Color(0xFFE6F9FA),
+        color: isEmpty
+            ? AppColors.white.withOpacity(0.3)
+            : AppColors.iceBlue.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: sintomasSeleccionados.isEmpty ? Colors.grey[300]! : Color(0xFF00A5A5),
+          color: isEmpty
+              ? AppColors.paynesGray.withOpacity(0.3)
+              : AppColors.keppel,
         ),
       ),
       child: Row(
@@ -363,21 +439,27 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
         children: [
           Text(
             "Síntomas seleccionados",
-            style: TextStyle(
+            style: AppTextStyles.body.copyWith(
               fontWeight: FontWeight.w600,
-              color: sintomasSeleccionados.isEmpty ? Colors.grey : Color(0xFF006D73),
+              color: isEmpty
+                  ? AppColors.paynesGray.withOpacity(0.7)
+                  : AppColors.keppel,
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: sintomasSeleccionados.isEmpty ? Colors.grey : Color(0xFF006D73),
+              color: isEmpty
+                  ? AppColors.paynesGray.withOpacity(0.7)
+                  : AppColors.aquamarine,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               "${sintomasSeleccionados.length}",
               style: TextStyle(
-                color: Colors.white,
+                color: isEmpty
+                    ? AppColors.white
+                    : AppColors.paynesGray,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -392,63 +474,56 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: ExpansionTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Color(0xFF006D73).withOpacity(0.1),
+            color: AppColors.keppel.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.medical_services,
-            color: Color(0xFF006D73),
+          child: const Icon(
+            Icons.medical_services_outlined,
+            color: AppColors.keppel,
             size: 20,
           ),
         ),
         title: Text(
           categoria.toUpperCase(),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF006D73),
-            fontSize: 15,
-          ),
+          style: AppTextStyles.cardTitle,
         ),
         subtitle: Text(
           "${sintomas.length} síntomas disponibles",
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
+          style: AppTextStyles.cardDescription.copyWith(
+            color: AppColors.paynesGray.withOpacity(0.7),
           ),
         ),
+        iconColor: AppColors.keppel,
+        collapsedIconColor: AppColors.keppel,
         children: sintomas.map((sintoma) {
           final seleccionado = sintomasSeleccionados.contains(sintoma);
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: seleccionado ? Color(0xFFE6F9FA) : Colors.transparent,
+              color: seleccionado
+                  ? AppColors.aquamarine.withOpacity(0.2)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: CheckboxListTile(
               title: Text(
                 sintoma,
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: seleccionado ? FontWeight.w600 : FontWeight.normal,
+                style: AppTextStyles.body.copyWith(
+                  fontWeight: seleccionado
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
-              activeColor: const Color(0xFF006D73),
-              checkColor: Colors.white,
+              activeColor: AppColors.keppel,
+              checkColor: AppColors.white,
               value: seleccionado,
               onChanged: (val) {
                 setState(() {
@@ -468,37 +543,39 @@ class _SintomasAlternativaPageState extends State<SintomasAlternativaPage> {
   }
 
   Widget _buildBotonDiagnostico() {
+    bool isDisabled = sintomasSeleccionados.isEmpty;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         icon: Icon(
           Icons.search,
-          color: Colors.white,
+          color: isDisabled
+              ? AppColors.paynesGray.withOpacity(0.7)
+              : AppColors.paynesGray,
           size: 20,
         ),
         label: Text(
-          sintomasSeleccionados.isEmpty
+          isDisabled
               ? "Selecciona al menos un síntoma"
               : "Consultar Diagnóstico Natural (${sintomasSeleccionados.length})",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 16,
+          style: AppTextStyles.button.copyWith(
+            color: isDisabled
+                ? AppColors.paynesGray.withOpacity(0.7)
+                : AppColors.paynesGray,
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: sintomasSeleccionados.isEmpty
-              ? Colors.grey
-              : const Color(0xFF006D73),
+          backgroundColor: isDisabled
+              ? AppColors.paynesGray.withOpacity(0.2)
+              : AppColors.aquamarine,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
           padding: const EdgeInsets.symmetric(vertical: 16),
           elevation: 3,
         ),
-        onPressed: sintomasSeleccionados.isEmpty
-            ? null
-            : () => _mostrarAdvertencia(),
+        onPressed: isDisabled ? null : () => _mostrarAdvertencia(),
       ),
     );
   }

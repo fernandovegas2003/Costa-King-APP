@@ -3,6 +3,47 @@ import "package:flutter/material.dart";
 import "package:http/http.dart" as http;
 import "archivos_local_helper.dart";
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 13,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+}
+
 class ArchivosPage extends StatefulWidget {
   final Map<String, dynamic> cita;
   final String nombrePaciente;
@@ -37,10 +78,8 @@ class _ArchivosPageState extends State<ArchivosPage> {
         : int.tryParse('$rawIdPaciente');
 
     if (idPaciente == null) {
-      setState(() {
-        _cargando = false;
-      });
-      _showSnack('No se encontro historia clinica del paciente');
+      setState(() => _cargando = false);
+      _showSnack('No se encontro historia clinica del paciente', isError: true);
       return;
     }
 
@@ -74,22 +113,19 @@ class _ArchivosPageState extends State<ArchivosPage> {
 
           await _cargarArchivos();
         } else {
-          setState(() {
-            _cargando = false;
-          });
+          setState(() => _cargando = false);
         }
       } else {
-        setState(() {
-          _cargando = false;
-        });
-        _showSnack('No se encontro historia clinica del paciente');
+        setState(() => _cargando = false);
+        _showSnack(
+          'No se encontro historia clinica del paciente',
+          isError: true,
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _cargando = false;
-      });
-      _showSnack('Error al cargar historia clinica: $e');
+      setState(() => _cargando = false);
+      _showSnack('Error al cargar historia clinica: $e', isError: true);
     }
   }
 
@@ -109,11 +145,16 @@ class _ArchivosPageState extends State<ArchivosPage> {
     _showSnack('Archivo eliminado');
   }
 
-  void _showSnack(String message) {
+  void _showSnack(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? Colors.red[700]
+            : AppColors.keppel,
+      ),
+    );
   }
 
   bool _esImagen(Map<String, dynamic> archivo) {
@@ -132,6 +173,7 @@ class _ArchivosPageState extends State<ArchivosPage> {
         showDialog(
           context: context,
           builder: (ctx) => Dialog(
+            backgroundColor: Colors.transparent,
             child: InteractiveViewer(
               child: Image.memory(bytes, fit: BoxFit.contain),
             ),
@@ -148,12 +190,28 @@ class _ArchivosPageState extends State<ArchivosPage> {
         showDialog<void>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text(nombre),
-            content: SingleChildScrollView(child: SelectableText(contenido)),
+            backgroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              nombre,
+              style: AppTextStyles.headline.copyWith(fontSize: 20),
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(contenido, style: AppTextStyles.body),
+            ),
             actions: [
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.aquamarine,
+                  foregroundColor: AppColors.paynesGray,
+                ),
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cerrar'),
+                child: const Text(
+                  'Cerrar',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -162,106 +220,151 @@ class _ArchivosPageState extends State<ArchivosPage> {
       } catch (_) {}
     }
 
-    _showSnack('Archivo: ');
+    _showSnack('No se puede previsualizar este tipo de archivo ($tipo)');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/Fondo.png', fit: BoxFit.cover),
+      backgroundColor: AppColors.celeste,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
           ),
-          Column(
-            children: [
-              Container(
-                color: const Color(0xFF00BCD4),
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  widget.nombrePaciente.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Archivos Adjuntos",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(40.0),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            color: AppColors.keppel.withOpacity(0.1),
+            child: Text(
+              widget.nombrePaciente.toUpperCase(),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.keppel,
+                fontWeight: FontWeight.bold,
               ),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: _cargando
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.aquamarine),
+                      SizedBox(height: 16),
+                      Text("Cargando archivos...", style: AppTextStyles.body),
+                    ],
                   ),
-                  child: _cargando
-                      ? const Center(child: CircularProgressIndicator())
-                      : _archivos.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No hay archivos disponibles',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _archivos.length,
-                          itemBuilder: (context, index) {
-                            final archivo = _archivos[index];
-                            final nombreArchivo =
-                                archivo['nombreArchivo'] ??
-                                archivo['nombre'] ??
-                                'Archivo sin nombre';
-                            final tipoArchivo =
-                                archivo['tipoArchivo'] ??
-                                archivo['tipo'] ??
-                                'desconocido';
-                            final fechaArchivo =
-                                archivo['fechaCreacion'] ??
-                                archivo['fecha'] ??
-                                'Fecha desconocida';
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              child: ListTile(
-                                leading: Icon(
-                                  tipoArchivo.contains('pdf')
-                                      ? Icons.picture_as_pdf
-                                      : _esImagen(archivo)
-                                      ? Icons.image
-                                      : Icons.insert_drive_file,
-                                  color: tipoArchivo.contains('pdf')
-                                      ? Colors.red
-                                      : _esImagen(archivo)
-                                      ? Colors.blue
-                                      : Colors.grey,
-                                ),
-                                title: Text(nombreArchivo),
-                                subtitle: Text(fechaArchivo),
-                                onTap: () => _visualizarArchivo(archivo),
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red,
-                                  ),
-                                  tooltip: 'Eliminar',
-                                  onPressed: () =>
-                                      _eliminarArchivoLocal(archivo),
-                                ),
-                              ),
-                            );
-                          },
+                )
+              : _archivos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.folder_off_outlined,
+                        size: 60,
+                        color: AppColors.paynesGray.withOpacity(0.3),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'No hay archivos disponibles',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.paynesGray.withOpacity(0.7),
                         ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _archivos.length,
+                  itemBuilder: (context, index) {
+                    final archivo = _archivos[index];
+                    final nombreArchivo =
+                        archivo['nombreArchivo'] ??
+                        archivo['nombre'] ??
+                        'Archivo sin nombre';
+                    final tipoArchivo =
+                        archivo['tipoArchivo'] ??
+                        archivo['tipo'] ??
+                        'desconocido';
+                    final fechaArchivo =
+                        archivo['fechaCreacion'] ??
+                        archivo['fecha'] ??
+                        'Fecha desconocida';
+
+                    return Card(
+                      color: AppColors.white.withOpacity(0.7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      elevation: 2,
+                      child: ListTile(
+                        leading: Icon(
+                          tipoArchivo.contains('pdf')
+                              ? Icons.picture_as_pdf_outlined
+                              : _esImagen(archivo)
+                              ? Icons.image_outlined
+                              : Icons.insert_drive_file_outlined,
+                          color: tipoArchivo.contains('pdf')
+                              ? Colors.red[700]
+                              : _esImagen(archivo)
+                              ? AppColors
+                                  .keppel
+                              : AppColors.paynesGray,
+                        ),
+                        title: Text(
+                          nombreArchivo,
+                          style: AppTextStyles.body.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Tipo: $tipoArchivo\nFecha: $fechaArchivo",
+                          style: AppTextStyles.body.copyWith(
+                            fontSize: 12,
+                            color: AppColors.paynesGray.withOpacity(0.7),
+                          ),
+                        ),
+                        onTap: () => _visualizarArchivo(archivo),
+                        trailing: IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red[700],
+                          ),
+                          tooltip: 'Eliminar',
+                          onPressed: () => _eliminarArchivoLocal(archivo),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

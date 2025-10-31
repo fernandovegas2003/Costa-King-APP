@@ -73,7 +73,7 @@ class AuthService with ChangeNotifier {
       _userName = null;
       _userEmail = null;
 
-      // Limpiar SharedPreferences
+ 
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('userId');
       await prefs.remove('token');
@@ -92,7 +92,7 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  // 🔹 NUEVO MÉTODO: Limpiar sesión al cerrar la app
+
   Future<void> clearSessionOnExit() async {
     try {
       if (kDebugMode) {
@@ -120,7 +120,6 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  // Método para verificar si hay una sesión activa al iniciar la app
   Future<bool> hasActiveSession() async {
     await _loadUserData();
     return isLoggedIn;

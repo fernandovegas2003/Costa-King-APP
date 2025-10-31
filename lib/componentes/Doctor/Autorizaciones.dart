@@ -1,7 +1,56 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+}
 
 class VerAutorizacionesPage extends StatefulWidget {
   const VerAutorizacionesPage({Key? key}) : super(key: key);
@@ -28,47 +77,52 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
     idDoctor = prefs.getInt('idDoctor');
 
     if (idPaciente == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se encontró el ID del paciente")),
-      );
+      _showSnack("No se encontró el ID del paciente", isError: true);
       setState(() => cargando = false);
       return;
     }
 
     try {
       final url = Uri.parse(
-          "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/ordenes-medicas/paciente/$idPaciente");
+        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/ordenes-medicas/paciente/$idPaciente",
+      );
       final respuesta = await http.get(url);
 
+      if (!mounted) return;
       if (respuesta.statusCode == 200) {
         final data = jsonDecode(respuesta.body);
         setState(() {
           ordenes = (data["data"] ?? [])
-              .where((o) =>
-          o["estadoOrden"] == null ||
-              o["estadoOrden"].toString().toLowerCase() != "aprobada")
+              .where(
+                (o) =>
+                    o["estadoOrden"] == null ||
+                    o["estadoOrden"].toString().toLowerCase() != "aprobada",
+              )
               .toList();
           cargando = false;
         });
       } else {
         setState(() => cargando = false);
+        _showSnack("Error al cargar órdenes: ${respuesta.body}", isError: true);
       }
     } catch (e) {
-      setState(() => cargando = false);
+      if (mounted) {
+        setState(() => cargando = false);
+        _showSnack("Error de conexión: $e", isError: true);
+      }
     }
   }
 
   Future<void> _aprobarAutorizacion(int idOrden) async {
     if (idDoctor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se encontró el ID del doctor")),
-      );
+      _showSnack("No se encontró el ID del doctor", isError: true);
       return;
     }
 
     try {
       final url = Uri.parse(
-          "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/autorizaciones");
+        "https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/autorizaciones",
+      );
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -76,62 +130,89 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
           "idOrdenMedica": idOrden,
           "idAutorizador": idDoctor,
           "estadoAutorizacion": "Aprobada",
-          "observaciones": "Autorización aprobada por el doctor"
+          "observaciones": "Autorización aprobada por el doctor",
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Autorización aprobada con éxito ✅")),
-        );
-        // ✅ Refrescar lista sin necesidad de recargar la pantalla completa
+        _showSnack("Autorización aprobada con éxito ✅");
         setState(() {
           ordenes.removeWhere((o) => o["idOrdenMedica"] == idOrden);
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al aprobar: ${response.body}")),
-        );
+        _showSnack("Error al aprobar: ${response.body}", isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      _showSnack("Error: $e", isError: true);
     }
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[700] : AppColors.keppel,
+      ),
+    );
   }
 
   void mostrarDetallesOrden(Map<String, dynamic> orden) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Detalles de la Orden Médica",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          "Detalles de la Orden",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("🆔 ID Orden: ${orden['idOrdenMedica']}"),
-            Text("🩺 Tipo: ${orden['tipoOrden']}"),
-            Text("📄 Descripción: ${orden['descripcion']}"),
-            Text(
-                "📅 Emitida: ${orden['fechaEmision']?.toString().split('T')[0] ?? 'N/A'}"),
-            Text(
-                "⏰ Vence: ${orden['fechaVencimiento']?.toString().split('T')[0] ?? 'N/A'}"),
-            Text("📌 Estado: ${orden['estadoOrden'] ?? 'Pendiente'}"),
-            Text("🧑‍⚕️ Médico: ${orden['nombreMedico'] ?? 'Desconocido'}"),
-            Text("🏥 Especialidad: ${orden['especialidad'] ?? 'N/A'}"),
-            Text("💬 Observaciones: ${orden['observaciones'] ?? 'N/A'}"),
+            _buildInfoRow("🆔 ID Orden:", "${orden['idOrdenMedica']}"),
+            _buildInfoRow("🩺 Tipo:", "${orden['tipoOrden']}"),
+            _buildInfoRow("📄 Descripción:", "${orden['descripcion']}"),
+            _buildInfoRow(
+              "📅 Emitida:",
+              _formatearFecha(orden['fechaEmision']),
+            ),
+            _buildInfoRow(
+              "⏰ Vence:",
+              _formatearFecha(orden['fechaVencimiento']),
+            ),
+            _buildInfoRow(
+              "📌 Estado:",
+              "${orden['estadoOrden'] ?? 'Pendiente'}",
+            ),
+            _buildInfoRow(
+              "🧑‍⚕️ Médico:",
+              "${orden['nombreMedico'] ?? 'Desconocido'}",
+            ),
+            _buildInfoRow(
+              "🏥 Especialidad:",
+              "${orden['especialidad'] ?? 'N/A'}",
+            ),
+            _buildInfoRow(
+              "💬 Observaciones:",
+              "${orden['observaciones'] ?? 'N/A'}",
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar", style: TextStyle(color: Colors.teal)),
+            child: Text(
+              "Cerrar",
+              style: TextStyle(color: AppColors.paynesGray),
+            ),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
+              backgroundColor: AppColors.aquamarine,
+              foregroundColor: AppColors.paynesGray,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -140,115 +221,167 @@ class _VerAutorizacionesPageState extends State<VerAutorizacionesPage> {
               Navigator.pop(context);
               await _aprobarAutorizacion(orden['idOrdenMedica']);
             },
-            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-            label: const Text("Aprobar"),
+            icon: const Icon(Icons.check_circle_outline, size: 20),
+            label: const Text(
+              "Aprobar",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: RichText(
+        text: TextSpan(
+          style: AppTextStyles.body.copyWith(fontSize: 14),
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatearFecha(String? fecha) {
+    if (fecha == null || fecha.isEmpty) return "No disponible";
+    try {
+      final date = DateTime.parse(fecha);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return fecha;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste,
       appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.9),
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          "Órdenes Médicas del Paciente",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset("assets/images/Fondo.png", fit: BoxFit.cover),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
           ),
-          cargando
-              ? const Center(
-            child: CircularProgressIndicator(color: Color(0xFF01A4B2)),
-          )
-              : Column(
-            children: [
-              const SizedBox(height: 20),
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.93),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: Offset(0, 4),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          "Autorizaciones Pendientes",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: cargando
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.aquamarine),
+                      SizedBox(height: 16),
+                      Text("Cargando órdenes...", style: AppTextStyles.body),
+                    ],
+                  ),
+                )
+              : ordenes.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 60,
+                        color: AppColors.paynesGray.withOpacity(0.3),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "No hay órdenes pendientes para este paciente 🩺",
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.paynesGray.withOpacity(0.7),
+                        ),
                       ),
                     ],
                   ),
-                  child: ordenes.isEmpty
-                      ? const Center(
-                    child: Text(
-                      "No hay órdenes médicas pendientes para este paciente 🩺",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.black54, fontSize: 16),
-                    ),
-                  )
-                      : ListView.builder(
-                    itemCount: ordenes.length,
-                    itemBuilder: (context, index) {
-                      final o = ordenes[index];
-                      return Card(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.circular(12)),
-                        margin:
-                        const EdgeInsets.symmetric(vertical: 8),
-                        child: ListTile(
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFF01A4B2),
-                            child: Icon(Icons.assignment,
-                                color: Colors.white),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: ordenes.length,
+                  itemBuilder: (context, index) {
+                    final o = ordenes[index];
+                    return Card(
+                      color: AppColors.white.withOpacity(0.7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 2,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.keppel.withOpacity(
+                            0.1,
                           ),
-                          title: Text(
-                            "${o['tipoOrden'] ?? 'Orden'}: ${o['descripcion'] ?? 'Sin descripción'}",
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                          child: Icon(
+                            Icons.assignment_outlined,
+                            color: AppColors.keppel,
                           ),
-                          subtitle: Text(
-                              "Estado: ${o['estadoOrden'] ?? 'Pendiente'}"),
-                          trailing: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.teal.shade400,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () async {
-                              await _aprobarAutorizacion(
-                                  o['idOrdenMedica']);
-                            },
-                            child: const Text(
-                              "Aprobar",
-                              style:
-                              TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          onTap: () => mostrarDetallesOrden(o),
                         ),
-                      );
-                    },
-                  ),
+                        title: Text(
+                          "${o['tipoOrden'] ?? 'Orden'}: ${o['descripcion'] ?? 'Sin descripción'}",
+                          style: AppTextStyles.cardTitle.copyWith(
+                            fontSize: 15,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          "Estado: ${o['estadoOrden'] ?? 'Pendiente'}",
+                          style: AppTextStyles.cardDescription.copyWith(
+                            color: AppColors.paynesGray.withOpacity(0.8),
+                          ),
+                        ),
+                        trailing: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.aquamarine,
+                            foregroundColor: AppColors.paynesGray,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            await _aprobarAutorizacion(o['idOrdenMedica']);
+                          },
+                          child: const Text(
+                            "Aprobar",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        onTap: () => mostrarDetallesOrden(o),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

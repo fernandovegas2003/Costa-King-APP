@@ -1,12 +1,58 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:intl/intl.dart';
 import 'Archivos.dart';
 import 'HistoriaClinica.dart';
 import 'Medicina.dart';
 import 'Remitir.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontFamily: _fontFamily,
+  );
+}
 
 class Paciente extends StatefulWidget {
   final String documentoId;
@@ -23,7 +69,6 @@ class _PacienteState extends State<Paciente>
   bool isLoading = true;
   String errorMessage = '';
 
-  // Datos normalizados
   Map<String, dynamic> datosUsuario = {};
   Map<String, dynamic> historiaClinica = {};
 
@@ -33,7 +78,7 @@ class _PacienteState extends State<Paciente>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = _tabController = TabController(length: 4, vsync: this);
     fetchPacienteData();
   }
 
@@ -43,9 +88,7 @@ class _PacienteState extends State<Paciente>
     super.dispose();
   }
 
-  // ----------------- Helpers de parseo seguros -----------------
   Map<String, dynamic>? _firstMap(dynamic decoded) {
-    // Acepta {data: {...}}, {data: [...]}, [...], {...}
     if (decoded is Map && decoded['data'] != null) {
       final d = decoded['data'];
       if (d is List) {
@@ -82,15 +125,12 @@ class _PacienteState extends State<Paciente>
     return const [];
   }
 
-  // ----------------- Lógica principal -----------------
   Future<void> fetchPacienteData() async {
     setState(() {
       isLoading = true;
       errorMessage = '';
     });
-
     try {
-      // 1) Usuario por documento
       final usuarioRes = await http.get(
         Uri.parse('$baseUrl/usuarios/documento/${widget.documentoId}'),
       );
@@ -111,8 +151,6 @@ class _PacienteState extends State<Paciente>
         });
         return;
       }
-
-      // Normaliza: esperamos nombres según BD
       final int? idPaciente = (usuario['idUsuario'] is int)
           ? usuario['idUsuario'] as int
           : int.tryParse('${usuario['idUsuario']}');
@@ -120,8 +158,6 @@ class _PacienteState extends State<Paciente>
       setState(() {
         datosUsuario = usuario;
       });
-
-      // 2) Historias por idPaciente (fallback por documento)
       Map<String, dynamic> hcElegida = {};
       if (idPaciente != null) {
         final hcRes = await http.get(
@@ -133,7 +169,6 @@ class _PacienteState extends State<Paciente>
           if (lista.isNotEmpty) {
             hcElegida = lista.first;
           } else {
-            // Fallback: por documento
             final hcDocRes = await http.get(
               Uri.parse(
                 '$baseUrl/historias-clinicas/documento/${widget.documentoId}',
@@ -145,7 +180,6 @@ class _PacienteState extends State<Paciente>
             }
           }
         } else {
-          // Fallback directo si 4xx/5xx
           final hcDocRes = await http.get(
             Uri.parse(
               '$baseUrl/historias-clinicas/documento/${widget.documentoId}',
@@ -157,7 +191,6 @@ class _PacienteState extends State<Paciente>
           }
         }
       }
-
       setState(() {
         historiaClinica = hcElegida;
         isLoading = false;
@@ -170,7 +203,6 @@ class _PacienteState extends State<Paciente>
     }
   }
 
-  // ----------------- Utilidades de UI -----------------
   String _nombreCompleto(Map<String, dynamic> u) {
     final n = (u['nombreUsuario'] ?? '').toString();
     final a = (u['apellidoUsuario'] ?? '').toString();
@@ -193,95 +225,6 @@ class _PacienteState extends State<Paciente>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final nombre = _nombreCompleto(datosUsuario).toUpperCase();
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00B0BD),
-        title: const Text('Agenda de citas'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage.isNotEmpty
-          ? Center(
-              child: Text(
-                errorMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
-            )
-          : Column(
-              children: [
-                Container(
-                  color: const Color(0xFF00B0BD),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Center(
-                    child: Text(
-                      nombre,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: 'Datos'),
-                    Tab(text: 'Diagnostico'),
-                    Tab(text: 'Archivos'),
-                  ],
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: const Color(0xFF00B0BD),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildDatosTab(),
-                      _buildDiagnosticoTab(),
-                      _buildNotasTab(),
-                      _buildArchivosTab(),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildActionButton(
-                        'Consultar Historia',
-                        _abrirHistoriaClinica,
-                        const Color(0xFF7DD1D8),
-                      ),
-                      _buildActionButton(
-                        'Remitir',
-                        _abrirRemitir,
-                        const Color(0xFF00B0BD),
-                      ),
-                      _buildActionButton(
-                        'Medicina',
-                        () => _abrirMedicina(),
-                        const Color(0xFF00B0BD),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
   int? _parseInt(dynamic value) {
     if (value is int) return value;
     if (value is String && value.trim().isNotEmpty) {
@@ -292,10 +235,8 @@ class _PacienteState extends State<Paciente>
 
   int? get _idHistoriaClinica =>
       _parseInt(historiaClinica['idHistoriaClinica']);
-
   int? get _idPaciente =>
       _parseInt(datosUsuario['idUsuario'] ?? datosUsuario['idPaciente']);
-
   List<Map<String, dynamic>> get _registrosConsultas {
     final registros = historiaClinica['registrosConsultas'];
     if (registros is List) {
@@ -315,17 +256,15 @@ class _PacienteState extends State<Paciente>
 
   Map<String, dynamic>? get _primerRegistroConsulta =>
       _registrosConsultas.isNotEmpty ? _registrosConsultas.first : null;
-
   int? get _idRegistroConsulta =>
       _parseInt(_primerRegistroConsulta?['idRegistroConsulta']);
-
   int? get _idCitaAsociada => _parseInt(_primerRegistroConsulta?['idCita']);
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.keppel),
+    );
   }
 
   Future<String> _obtenerNombreDoctor() async {
@@ -350,12 +289,10 @@ class _PacienteState extends State<Paciente>
 
   void _abrirHistoriaClinica() {
     final idPaciente = _idPaciente;
-
     if (idPaciente == null) {
       _showMessage('No se encontró información del paciente.');
       return;
     }
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => HistoriaClinicaPage(idPaciente: idPaciente),
@@ -363,11 +300,9 @@ class _PacienteState extends State<Paciente>
     );
   }
 
-
   void _abrirRemitir() {
     final idPaciente = _idPaciente;
     final idRegistro = _idRegistroConsulta;
-
     if (idPaciente == null) {
       _showMessage('No se encontro informacion del paciente.');
       return;
@@ -376,7 +311,6 @@ class _PacienteState extends State<Paciente>
       _showMessage('El paciente no tiene registros disponibles para remitir.');
       return;
     }
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => RemitirPage(
@@ -394,10 +328,8 @@ class _PacienteState extends State<Paciente>
       _showMessage('No se encontro una historia clinica asociada.');
       return;
     }
-
     final nombreDoctor = await _obtenerNombreDoctor();
     if (!mounted) return;
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MedicinaPage(
@@ -408,206 +340,152 @@ class _PacienteState extends State<Paciente>
     );
   }
 
-  Widget _buildDiagnosticoTab() {
-    final registros = _registrosConsultas;
-    if (registros.isEmpty) {
-      return const Center(child: Text('Sin diagnosticos registrados'));
-    }
+  @override
+  Widget build(BuildContext context) {
+    final nombre = _nombreCompleto(datosUsuario).toUpperCase();
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: registros.length,
-      itemBuilder: (context, index) {
-        final registro = registros[index];
-        final diagnostico =
-            (registro['diagnostico'] ??
-                    registro['motivoConsulta'] ??
-                    'Sin diagnostico')
-                .toString();
-        final fecha = (registro['fechaConsulta'] ?? 'Fecha no disponible')
-            .toString();
-        final tratamiento = (registro['tratamiento'] ?? '').toString().trim();
-        final observaciones = (registro['observaciones'] ?? '')
-            .toString()
-            .trim();
-        final sintomas = (registro['sintomas'] ?? '').toString().trim();
-        final presion = (registro['presionArterial'] ?? '').toString().trim();
-        final frecuencia = (registro['frecuenciaCardiaca'] ?? '')
-            .toString()
-            .trim();
-        final peso = registro['peso'];
-        final altura = registro['altura'];
-        final imc = registro['imc'];
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12.0),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  diagnostico,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Fecha: $fecha',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                if (sintomas.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text('Sintomas: $sintomas'),
-                ],
-                if (tratamiento.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text('Tratamiento: $tratamiento'),
-                ],
-                if (observaciones.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text('Observaciones: $observaciones'),
-                ],
-                if (presion.isNotEmpty ||
-                    frecuencia.isNotEmpty ||
-                    peso != null ||
-                    altura != null ||
-                    imc != null) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 4,
-                    children: [
-                      if (presion.isNotEmpty) Text('Presion: $presion'),
-                      if (frecuencia.isNotEmpty)
-                        Text('Frecuencia: $frecuencia'),
-                      if (peso != null) Text('Peso: ${peso.toString()}'),
-                      if (altura != null) Text('Altura: ${altura.toString()}'),
-                      if (imc != null) Text('IMC: ${imc.toString()}'),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNotasTab() {
-    final antecedentes = (historiaClinica['antecedentesFamiliares'] ?? '')
-        .toString()
-        .trim();
-    final observaciones = (historiaClinica['observaciones'] ?? '')
-        .toString()
-        .trim();
-
-    if (antecedentes.isEmpty && observaciones.isEmpty) {
-      return const Center(child: Text('Sin notas registradas'));
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (antecedentes.isNotEmpty) ...[
-            const Text(
-              'Antecedentes familiares',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(antecedentes),
-            const SizedBox(height: 16),
-          ],
-          if (observaciones.isNotEmpty) ...[
-            const Text(
-              'Observaciones',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(observaciones),
-          ],
-        ],
+    return Scaffold(
+      backgroundColor: AppColors.celeste,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.paynesGray),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Agenda de citas',
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
       ),
-    );
-  }
-
-  Widget _buildArchivosTab() {
-    final idPaciente = _idPaciente;
-    if (idPaciente == null) {
-      return const Center(child: Text('Sin informacion del paciente'));
-    }
-
-    final registros = _registrosConsultas;
-    final nombrePaciente = _nombreCompleto(datosUsuario);
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Gestiona los archivos clinicos del paciente. Puedes revisarlos en una pantalla dedicada.',
-            style: TextStyle(fontWeight: FontWeight.w500),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DefaultTabController(
-                    length: 3,
-                    child: ArchivosPage(
-                      cita: {
-                        'idPaciente': idPaciente,
-                        'idHistoriaClinica': _idHistoriaClinica,
-                        'idCita': _idCitaAsociada,
-                      },
-                      nombrePaciente: nombrePaciente,
-                      idRegistroConsulta: _idRegistroConsulta,
+        ),
+        child: isLoading
+            ? Center(
+                child: CircularProgressIndicator(color: AppColors.aquamarine),
+              )
+            : errorMessage.isNotEmpty
+            ? Center(
+                child: Text(
+                  errorMessage,
+                  style: AppTextStyles.body.copyWith(color: Colors.red[700]),
+                ),
+              )
+            : Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.keppel, AppColors.paynesGray],
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        nombre,
+                        style: AppTextStyles.headline.copyWith(
+                          color: AppColors.white,
+                          fontSize: 24,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.folder_open),
-            label: const Text('Abrir Archivos'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00B0BD),
-              foregroundColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (registros.isEmpty)
-            const Text('No hay registros asociados para mostrar.')
-          else
-            Expanded(
-              child: ListView.builder(
-                itemCount: registros.length,
-                itemBuilder: (context, index) {
-                  final registro = registros[index];
-                  final descripcion =
-                      (registro['motivoConsulta'] ??
-                              registro['diagnostico'] ??
-                              'Registro ${index + 1}')
-                          .toString();
-                  final fecha = (registro['fechaConsulta'] ?? '').toString();
-                  return ListTile(
-                    leading: const Icon(Icons.insert_drive_file_outlined),
-                    title: Text(descripcion),
-                    subtitle: fecha.isEmpty ? null : Text(fecha),
-                  );
-                },
+
+                  Container(
+                    color: AppColors.white.withOpacity(0.5),
+                    child: TabBar(
+                      controller: _tabController,
+                      tabs: const [
+                        Tab(text: 'Datos'),
+                        Tab(text: 'Diagnostico'),
+                        Tab(text: 'Archivos'),
+                        Tab(text: 'Notas'),
+                      ],
+                      labelColor: AppColors.keppel,
+                      unselectedLabelColor: AppColors.paynesGray.withOpacity(
+                        0.7,
+                      ),
+                      indicatorColor: AppColors.keppel,
+                      indicatorWeight: 3.0,
+                      labelStyle: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      unselectedLabelStyle: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildDatosTab(),
+                        _buildDiagnosticoTab(),
+                        _buildArchivosTab(),
+                        _buildNotasTab(),
+                      ],
+                    ),
+                  ),
+
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.7),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.paynesGray.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: Offset(0, -3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildActionButton(
+                          'Historia',
+                          Icons.description_outlined,
+                          _abrirHistoriaClinica,
+                          AppColors.aquamarine,
+                          AppColors.paynesGray,
+                        ),
+                        _buildActionButton(
+                          'Remitir',
+                          Icons.send_outlined,
+                          _abrirRemitir,
+                          AppColors.keppel,
+                          AppColors.white,
+                        ),
+                        _buildActionButton(
+                          'Medicina',
+                          Icons.medication_outlined,
+                          () => _abrirMedicina(),
+                          AppColors.keppel,
+                          AppColors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-        ],
       ),
     );
   }
 
   Widget _buildDatosTab() {
-    // Campos según BD USUARIOS
     final numeroDoc = '${datosUsuario['numeroDocumento'] ?? ''}';
     final fechaNac = '${datosUsuario['fechaNacimiento'] ?? ''}';
     final edad = _calcEdad(datosUsuario['fechaNacimiento']?.toString());
@@ -615,9 +493,7 @@ class _PacienteState extends State<Paciente>
     final direccion = '${datosUsuario['direccionUsuario'] ?? ''}';
     final telefono = '${datosUsuario['telefonoUsuario'] ?? ''}';
     final correo = '${datosUsuario['emailUsuario'] ?? ''}';
-    final tipoDocId = '${datosUsuario['tipoDocumento'] ?? ''}'; // id numérico
-
-    // Campos de HISTORIAS_CLINICAS
+    final tipoDocId = '${datosUsuario['tipoDocumento'] ?? ''}';
     final alergias = '${historiaClinica['alergias'] ?? 'Ninguna'}';
     final enfCron = '${historiaClinica['enfermedadesCronicas'] ?? ''}';
     final meds = '${historiaClinica['medicamentos'] ?? ''}';
@@ -640,7 +516,11 @@ class _PacienteState extends State<Paciente>
           _buildInfoRow('Dirección', direccion),
           _buildInfoRow('Teléfono', telefono),
           _buildInfoRow('Correo', correo),
-          const Divider(height: 24),
+          Divider(
+            color: AppColors.keppel.withOpacity(0.5),
+            height: 24,
+            thickness: 1,
+          ),
           _buildInfoRow('Alergias', alergias),
           _buildInfoRow('Enfermedades crónicas', enfCron),
           _buildInfoRow('Medicamentos', meds),
@@ -648,6 +528,215 @@ class _PacienteState extends State<Paciente>
           _buildInfoRow('Observaciones', obs),
           _buildInfoRow('Fecha de creación', fcrea),
           _buildInfoRow('Última actualización', factual),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticoTab() {
+    final registros = _registrosConsultas;
+    if (registros.isEmpty) {
+      return Center(
+        child: Text(
+          'Sin diagnosticos registrados',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.paynesGray.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: registros.length,
+      itemBuilder: (context, index) {
+        final registro = registros[index];
+        final diagnostico =
+            (registro['diagnostico'] ??
+                    registro['motivoConsulta'] ??
+                    'Sin diagnostico')
+                .toString();
+        final fecha = (registro['fechaConsulta'] ?? 'Fecha no disponible')
+            .toString();
+        final sintomas = (registro['sintomas'] ?? '').toString().trim();
+        final presion = (registro['presionArterial'] ?? '').toString().trim();
+        final frecuencia = (registro['frecuenciaCardiaca'] ?? '')
+            .toString()
+            .trim();
+        final peso = registro['peso'];
+        final altura = registro['altura'];
+        final imc = registro['imc'];
+
+        return Card(
+          color: AppColors.white.withOpacity(0.7),
+          margin: const EdgeInsets.only(bottom: 12.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(diagnostico, style: AppTextStyles.cardTitle),
+                const SizedBox(height: 4),
+                Text(
+                  'Fecha: $fecha',
+                  style: AppTextStyles.cardDescription.copyWith(
+                    fontSize: 12,
+                    color: AppColors.paynesGray.withOpacity(0.7),
+                  ),
+                ),
+                if (sintomas.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sintomas: $sintomas',
+                    style: AppTextStyles.cardDescription,
+                  ),
+                ],
+                if (presion.isNotEmpty ||
+                    frecuencia.isNotEmpty ||
+                    peso != null ||
+                    altura != null ||
+                    imc != null) ...[
+                  Divider(color: AppColors.keppel.withOpacity(0.5), height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      if (presion.isNotEmpty)
+                        Text(
+                          'Presion: $presion',
+                          style: AppTextStyles.cardDescription,
+                        ),
+                      if (frecuencia.isNotEmpty)
+                        Text(
+                          'Frecuencia: $frecuencia',
+                          style: AppTextStyles.cardDescription,
+                        ),
+                      if (peso != null)
+                        Text(
+                          'Peso: ${peso.toString()}',
+                          style: AppTextStyles.cardDescription,
+                        ),
+                      if (altura != null)
+                        Text(
+                          'Altura: ${altura.toString()}',
+                          style: AppTextStyles.cardDescription,
+                        ),
+                      if (imc != null)
+                        Text(
+                          'IMC: ${imc.toString()}',
+                          style: AppTextStyles.cardDescription,
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNotasTab() {
+    final antecedentes = (historiaClinica['antecedentesFamiliares'] ?? '')
+        .toString()
+        .trim();
+    final observaciones = (historiaClinica['observaciones'] ?? '')
+        .toString()
+        .trim();
+
+    if (antecedentes.isEmpty && observaciones.isEmpty) {
+      return Center(
+        child: Text(
+          'Sin notas registradas',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.paynesGray.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (antecedentes.isNotEmpty) ...[
+            Text('Antecedentes familiares', style: AppTextStyles.cardTitle),
+            const SizedBox(height: 8),
+            Text(antecedentes, style: AppTextStyles.body),
+            const SizedBox(height: 16),
+          ],
+          if (observaciones.isNotEmpty) ...[
+            Text('Observaciones', style: AppTextStyles.cardTitle),
+            const SizedBox(height: 8),
+            Text(observaciones, style: AppTextStyles.body),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArchivosTab() {
+    final idPaciente = _idPaciente;
+    if (idPaciente == null) {
+      return Center(
+        child: Text(
+          'Sin informacion del paciente',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.paynesGray.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final nombrePaciente = _nombreCompleto(datosUsuario);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Gestiona los archivos clinicos del paciente. Puedes revisarlos en una pantalla dedicada.',
+            style: AppTextStyles.body,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DefaultTabController(
+                    length: 3,
+                    child: ArchivosPage(
+                      cita: {
+                        'idPaciente': idPaciente,
+                        'idHistoriaClinica': _idHistoriaClinica,
+                        'idCita': _idCitaAsociada,
+                      },
+                      nombrePaciente: nombrePaciente,
+                      idRegistroConsulta: _idRegistroConsulta,
+                    ),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.folder_open_outlined),
+            label: Text(
+              'Abrir Gestor de Archivos',
+              style: AppTextStyles.button,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine,
+              foregroundColor: AppColors.paynesGray,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+          ),
         ],
       ),
     );
@@ -663,13 +752,16 @@ class _PacienteState extends State<Paciente>
             width: 160,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: AppTextStyles.body.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.paynesGray.withOpacity(0.8),
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.right,
             ),
           ),
@@ -678,16 +770,33 @@ class _PacienteState extends State<Paciente>
     );
   }
 
-  Widget _buildActionButton(String text, VoidCallback onPressed, Color color) {
+  Widget _buildActionButton(
+    String text,
+    IconData icon,
+    VoidCallback onPressed,
+    Color bgColor,
+    Color fgColor,
+  ) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        backgroundColor: bgColor,
+        foregroundColor: fgColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       ),
-      child: Text(text),
+      child: Column(
+        children: [
+          Icon(icon, size: 24),
+          SizedBox(height: 4),
+          Text(
+            text,
+            style: AppTextStyles.button.copyWith(color: fgColor, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }

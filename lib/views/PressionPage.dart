@@ -6,6 +6,53 @@ import 'Remedios.dart';
 import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 13,
+    fontFamily: _fontFamily,
+  );
+}
+
 class PresionPage extends StatefulWidget {
   const PresionPage({super.key});
 
@@ -43,12 +90,18 @@ class _PresionPageState extends State<PresionPage> {
         setState(() => _resultado = jsonDecode(response.body));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No se pudo analizar la presión.")),
+          const SnackBar(
+            content: Text("No se pudo analizar la presión."),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al analizar: $e")),
+        SnackBar(
+          content: Text("Error al analizar: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => _cargando = false);
@@ -58,108 +111,115 @@ class _PresionPageState extends State<PresionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FDFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Header elegante
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF006D73),
-                    const Color(0xFF00A5A5),
-                  ],
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.monitor_heart,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Análisis de Presión Arterial",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Evalúa tu presión y obtén recomendaciones médicas",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.keppel,
+                      AppColors.paynesGray,
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.monitor_heart_outlined,
+                            color: AppColors.white,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Análisis de Presión Arterial",
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              Text(
+                                "Evalúa tu presión y obtén recomendaciones",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      "Control Cardiovascular",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Control Cardiovascular",
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // 🔹 Contenido principal
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                child: _resultado == null
-                    ? _buildFormulario()
-                    : _buildResultado(),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: _resultado == null
+                      ? _buildFormulario()
+                      : _buildResultado(),
+                ),
               ),
-            ),
 
-            // 🔹 Footer
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) => setState(() => _selectedIndex = index),
-            ),
-          ],
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) => setState(() => _selectedIndex = index),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -171,25 +231,30 @@ class _PresionPageState extends State<PresionPage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // 🔹 Tarjeta informativa
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.keppel.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[100]!),
+                border: Border.all(
+                  color: AppColors.keppel.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info, color: Colors.blue[600], size: 20),
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.keppel,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "Ingresa tus datos para un análisis preciso de tu presión arterial",
-                      style: TextStyle(
-                        color: Colors.blue[800],
+                      "Ingresa tus datos para un análisis preciso",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.keppel,
                         fontSize: 13,
                       ),
                     ),
@@ -198,84 +263,75 @@ class _PresionPageState extends State<PresionPage> {
               ),
             ),
 
-            // 🔹 Formulario
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 8,
-              shadowColor: const Color(0xFF006D73).withOpacity(0.2),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _inputField(
-                        "Edad",
-                        _edadCtrl,
-                        "Ingrese su edad",
-                        Icons.calendar_today,
-                      ),
-                      const SizedBox(height: 20),
-                      _dropdownGenero(),
-                      const SizedBox(height: 20),
-                      _inputField(
-                        "Presión Sistólica",
-                        _sistolicaCtrl,
-                        "Ingrese presión sistólica (Ej: 120)",
-                        Icons.favorite,
-                      ),
-                      const SizedBox(height: 20),
-                      _inputField(
-                        "Presión Diastólica",
-                        _diastolicaCtrl,
-                        "Ingrese presión diastólica (Ej: 80)",
-                        Icons.favorite_border,
-                      ),
-                      const SizedBox(height: 28),
-                      _cargando
-                          ? const Column(
-                        children: [
-                          CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006D73)),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            "Analizando tu presión...",
-                            style: TextStyle(
-                              color: Color(0xFF006D73),
-                              fontSize: 14,
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _inputField(
+                    "Edad",
+                    _edadCtrl,
+                    "Ingrese su edad",
+                    Icons.calendar_today_outlined,
+                  ),
+                  const SizedBox(height: 20),
+                  _dropdownGenero(),
+                  const SizedBox(height: 20),
+                  _inputField(
+                    "Presión Sistólica (Ej: 120)",
+                    _sistolicaCtrl,
+                    "Ingrese presión sistólica",
+                    Icons.favorite_border,
+                  ),
+                  const SizedBox(height: 20),
+                  _inputField(
+                    "Presión Diastólica (Ej: 80)",
+                    _diastolicaCtrl,
+                    "Ingrese presión diastólica",
+                    Icons.favorite_border,
+                  ),
+                  const SizedBox(height: 28),
+                  _cargando
+                      ? Column(
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.aquamarine,
+                              ),
                             ),
-                          ),
-                        ],
-                      )
-                          : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.monitor_heart_outlined, size: 20),
-                          onPressed: _analizar,
-                          label: const Text(
-                            "Analizar Presión Arterial",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                            SizedBox(height: 16),
+                            Text(
+                              "Analizando tu presión...",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray,
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF006D73),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                          ],
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(
+                              Icons.monitor_heart_outlined,
+                              size: 20,
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 4,
+                            onPressed: _analizar,
+                            label: Text(
+                              "Analizar Presión Arterial",
+                              style: AppTextStyles.button,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.aquamarine,
+                              foregroundColor: AppColors.paynesGray,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  30,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
           ],
@@ -285,26 +341,34 @@ class _PresionPageState extends State<PresionPage> {
   }
 
   Widget _inputField(
-      String label,
-      TextEditingController controller,
-      String validatorMsg,
-      IconData icon,
-      ) {
+    String label,
+    TextEditingController controller,
+    String validatorMsg,
+    IconData icon,
+  ) {
     return TextFormField(
       controller: controller,
+      style: AppTextStyles.body,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xFF006D73)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+        labelStyle: AppTextStyles.body.copyWith(
+          color: AppColors.paynesGray.withOpacity(0.7),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF006D73), width: 2),
+        prefixIcon: Icon(
+          icon,
+          color: AppColors.paynesGray,
+          size: 20,
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: AppColors.white.withOpacity(0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide(color: AppColors.keppel, width: 2),
+        ),
       ),
       keyboardType: TextInputType.number,
       validator: (v) => v!.isEmpty ? validatorMsg : null,
@@ -314,30 +378,32 @@ class _PresionPageState extends State<PresionPage> {
   Widget _dropdownGenero() {
     return DropdownButtonFormField<String>(
       value: _genero,
+      style: AppTextStyles.body,
       items: const [
-        DropdownMenuItem(
-          value: "hombre",
-          child: Text("Hombre"),
-        ),
-        DropdownMenuItem(
-          value: "mujer",
-          child: Text("Mujer"),
-        ),
+        DropdownMenuItem(value: "hombre", child: Text("Hombre")),
+        DropdownMenuItem(value: "mujer", child: Text("Mujer")),
       ],
       onChanged: (v) => setState(() => _genero = v!),
       decoration: InputDecoration(
         labelText: "Género",
-        prefixIcon: const Icon(Icons.person, color: Color(0xFF006D73)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+        labelStyle: AppTextStyles.body.copyWith(
+          color: AppColors.paynesGray.withOpacity(0.7),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF006D73), width: 2),
+        prefixIcon: Icon(
+          Icons.person_outline,
+          color: AppColors.paynesGray,
+          size: 20,
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: AppColors.white.withOpacity(0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide(color: AppColors.keppel, width: 2),
+        ),
       ),
     );
   }
@@ -350,7 +416,6 @@ class _PresionPageState extends State<PresionPage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // 🔹 Tarjeta de resultado principal
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -400,73 +465,73 @@ class _PresionPageState extends State<PresionPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildResultInfo("📊 Presión", "${data['valores']['sistolica']} / ${data['valores']['diastolica']}"),
+                _buildResultInfo(
+                  "📊 Presión",
+                  "${data['valores']['sistolica']} / ${data['valores']['diastolica']}",
+                ),
                 _buildResultInfo("👤 Edad", "${data['valores']['edad']} años"),
-                _buildResultInfo("⚧ Género", data['valores']['genero'] == "hombre" ? "Hombre" : "Mujer"),
+                _buildResultInfo(
+                  "⚧ Género",
+                  data['valores']['genero'] == "hombre" ? "Hombre" : "Mujer",
+                ),
               ],
             ),
           ),
 
           const SizedBox(height: 24),
 
-          // 🔹 Tarjeta de acciones
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white.withOpacity(0.7),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-              border: Border.all(color: Colors.grey[100]!),
+              border: Border.all(color: AppColors.white),
             ),
             child: Column(
               children: [
                 Text(
                   "Opciones de Tratamiento",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF006D73),
-                  ),
+                  style: AppTextStyles.cardTitle,
                 ),
                 const SizedBox(height: 16),
                 _buildActionButton(
-                  "💊 Ver Medicamentos Recomendados",
-                  Icons.medical_services,
-                  const Color(0xFF006D73),
-                      () => Navigator.push(
+                  "💊 Ver Medicamentos",
+                  Icons.medical_services_outlined,
+                  AppColors.aquamarine,
+                  AppColors.paynesGray,
+                  () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => MedicamentosPage(medicamentos: data['informacion_medicamentos']),
+                      builder: (_) => MedicamentosPage(
+                        medicamentos: data['informacion_medicamentos'],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   "🌿 Ver Remedios Caseros",
-                  Icons.spa,
-                  Colors.green,
-                      () => Navigator.push(
+                  Icons.spa_outlined,
+                  AppColors.keppel,
+                  AppColors.white,
+                  () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => RemediosPage(remedios: data['remedios_caseros']),
+                      builder: (_) =>
+                          RemediosPage(remedios: data['remedios_caseros']),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Divider(color: Colors.grey[300]),
+                Divider(color: AppColors.keppel.withOpacity(0.5)),
                 const SizedBox(height: 8),
                 _buildActionButton(
                   "🔄 Realizar Nuevo Análisis",
                   Icons.refresh,
-                  Colors.blueGrey,
-                      () => setState(() => _resultado = null),
+                  AppColors.paynesGray,
+                  AppColors.white,
+                  () => setState(() => _resultado = null),
                 ),
               ],
             ),
@@ -506,33 +571,31 @@ class _PresionPageState extends State<PresionPage> {
   }
 
   Widget _buildActionButton(
-      String texto,
-      IconData icono,
-      Color color,
-      VoidCallback onPressed,
-      ) {
+    String texto,
+    IconData icono,
+    Color backgroundColor,
+    Color foregroundColor,
+    VoidCallback onPressed,
+  ) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icono, size: 20),
-        label: Text(
-          texto,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+        label: const Text(
+          "Ver Remedios Caseros",
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(30),
           ),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          elevation: 3,
           alignment: Alignment.centerLeft,
         ),
+        
       ),
     );
   }
@@ -547,7 +610,7 @@ class _PresionPageState extends State<PresionPage> {
       case "hipertensión grave":
         return Colors.red;
       default:
-        return const Color(0xFF006D73);
+        return AppColors.paynesGray;
     }
   }
 

@@ -4,6 +4,47 @@ import 'package:http/http.dart' as http;
 import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 13,
+    fontFamily: _fontFamily,
+  );
+}
+
 class DiagnosticoSintomaPage extends StatefulWidget {
   final String sintoma;
   const DiagnosticoSintomaPage({super.key, required this.sintoma});
@@ -45,188 +86,192 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FDFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Header con estilo farmacia
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF006D73),
-                    const Color(0xFF00A5A5),
-                  ],
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.keppel,
+                      AppColors.paynesGray,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
+                  ),
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.medical_services,
+                            color: AppColors.white,
+                            size: 30,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.medical_services,
-                          color: Colors.white,
-                          size: 30,
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Diagnóstico Médico",
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              Text(
+                                "Síntoma: ${widget.sintoma}",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Consulta Farmacéutica",
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: cargando
+                    ? Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "Diagnóstico Médico",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.aquamarine,
                               ),
                             ),
+                            SizedBox(height: 16),
                             Text(
-                              "Síntoma: ${widget.sintoma}",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
+                              "Analizando diagnóstico...",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Consulta Farmacéutica",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 🔹 Contenido principal
-            Expanded(
-              child: cargando
-                  ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF006D73)),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      "Analizando diagnóstico...",
-                      style: TextStyle(
-                        color: Color(0xFF006D73),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // 🔹 Tarjeta de advertencias
-                    _buildAdvertenciasCard(),
-
-                    const SizedBox(height: 16),
-
-                    // 🔹 Tarjeta de emergencia
-                    if (resultado!['emergencia'] != null)
-                      _buildEmergenciaCard(),
-
-                    const SizedBox(height: 16),
-
-                    // 🔹 Tarjeta de enfermedades posibles
-                    _buildEnfermedadesCard(),
-
-                    const SizedBox(height: 20),
-
-                    // 🔹 Título de medicamentos
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+                      )
+                    : resultado ==
+                          null
+                    ? Center(
+                        child: Text(
+                          "Error al cargar el diagnóstico.",
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.red[700],
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.medication,
-                            color: Color(0xFF006D73),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            "Medicamentos Recomendados",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF006D73),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _buildAdvertenciasCard(),
+                            const SizedBox(height: 16),
+
+                            if (resultado!['emergencia'] != null)
+                              _buildEmergenciaCard(),
+                            const SizedBox(height: 16),
+
+                            _buildEnfermedadesCard(),
+                            const SizedBox(height: 20),
+
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withOpacity(
+                                  0.7,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.white,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.medication,
+                                    color: AppColors.keppel,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Medicamentos Recomendados",
+                                    style: AppTextStyles.cardTitle,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+
+                            ...((resultado!['medicamentos_recomendados']
+                                    as List)
+                                .map((m) {
+                                  return _buildMedicamentoCard(m);
+                                })),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 🔹 Lista de medicamentos
-                    ...((resultado!['medicamentos_recomendados'] as List).map((m) {
-                      return _buildMedicamentoCard(m);
-                    })),
-                  ],
-                ),
               ),
-            ),
 
-            // 🔹 Footer
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() => _selectedIndex = index);
-              },
-            ),
-          ],
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -276,11 +321,7 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.circle,
-                    size: 6,
-                    color: Colors.orange[800],
-                  ),
+                  Icon(Icons.circle, size: 6, color: Colors.orange[800]),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -309,10 +350,7 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.red[50]!,
-            Colors.orange[50]!,
-          ],
+          colors: [Colors.red[50]!, Colors.orange[50]!],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red[100]!),
@@ -328,15 +366,11 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.red,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.emergency,
-              color: Colors.white,
-              size: 24,
-            ),
+            child: const Icon(Icons.emergency, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -360,16 +394,9 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,17 +405,13 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
             children: [
               Icon(
                 Icons.health_and_safety,
-                color: Color(0xFF006D73),
+                color: AppColors.keppel,
                 size: 24,
               ),
               const SizedBox(width: 12),
               Text(
                 "Enfermedades Posibles",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006D73),
-                ),
+                style: AppTextStyles.cardTitle,
               ),
             ],
           ),
@@ -398,16 +421,21 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
             runSpacing: 8,
             children: ((resultado!['enfermedades_posibles'] as List).map((e) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Color(0xFF006D73).withOpacity(0.1),
+                  color: AppColors.keppel.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Color(0xFF006D73).withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.keppel.withOpacity(0.3),
+                  ),
                 ),
                 child: Text(
                   e,
                   style: TextStyle(
-                    color: Color(0xFF006D73),
+                    color: AppColors.keppel,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -425,43 +453,34 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: ExpansionTile(
+        iconColor: AppColors.keppel,
+        collapsedIconColor: AppColors.keppel,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Color(0xFF006D73).withOpacity(0.1),
+            color: AppColors.keppel.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.medication_liquid,
-            color: Color(0xFF006D73),
+            color: AppColors.keppel,
             size: 20,
           ),
         ),
         title: Text(
           medicamento['nombre'],
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF006D73),
-            fontSize: 16,
-          ),
+          style: AppTextStyles.headline.copyWith(fontSize: 16),
         ),
         subtitle: Text(
           medicamento['descripcion'],
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 13,
+          style: AppTextStyles.cardDescription.copyWith(
+            color: AppColors.paynesGray.withOpacity(0.7),
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -470,7 +489,7 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: AppColors.iceBlue.withOpacity(0.3),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
@@ -481,9 +500,15 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
                 _buildInfoRow("💊 Dosis", pos['dosis']),
                 _buildInfoRow("📅 Frecuencia", pos['frecuencia']),
                 _buildInfoRow("⏱️ Duración", pos['duracion']),
-                _buildInfoRow("🔄 Vía de administración", pos['via_administracion']),
+                _buildInfoRow(
+                  "🔄 Vía de administración",
+                  pos['via_administracion'],
+                ),
                 if (pos['dosis_maxima_diaria'] != null)
-                  _buildInfoRow("⚠️ Dosis máxima diaria", pos['dosis_maxima_diaria']),
+                  _buildInfoRow(
+                    "⚠️ Dosis máxima diaria",
+                    pos['dosis_maxima_diaria'],
+                  ),
               ],
             ),
           ),
@@ -499,12 +524,12 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 160,
+            width: 140,
             child: Text(
               label,
-              style: TextStyle(
+              style: AppTextStyles.body.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: AppColors.paynesGray.withOpacity(0.7),
                 fontSize: 13,
               ),
             ),
@@ -512,8 +537,8 @@ class _DiagnosticoSintomaPageState extends State<DiagnosticoSintomaPage> {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                color: Color(0xFF006D73),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.paynesGray,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),

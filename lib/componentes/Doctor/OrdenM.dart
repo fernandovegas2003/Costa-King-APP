@@ -1,6 +1,41 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class OrdenMedicaPage extends StatefulWidget {
   const OrdenMedicaPage({Key? key}) : super(key: key);
@@ -14,9 +49,9 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
   final TextEditingController _tipoOrdenController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _fechaVencimientoController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController _observacionesController =
-  TextEditingController();
+      TextEditingController();
 
   bool cargando = false;
 
@@ -44,35 +79,119 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
         body: jsonEncode(body),
       );
 
+      if (!mounted) return;
+
       if (respuesta.statusCode == 201 || respuesta.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Orden médica registrada correctamente."),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _showSnack("✅ Orden médica registrada correctamente.");
         _formKey.currentState!.reset();
         _tipoOrdenController.clear();
         _descripcionController.clear();
         _fechaVencimientoController.clear();
         _observacionesController.clear();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("⚠️ Error al registrar: ${respuesta.body}"),
-            backgroundColor: Colors.redAccent,
-          ),
+        _showSnack(
+          "⚠️ Error al registrar: ${respuesta.body}",
+          isError: true,
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❌ Error de conexión con el servidor."),
-          backgroundColor: Colors.redAccent,
-        ),
+      _showSnack(
+        "❌ Error de conexión con el servidor.",
+        isError: true,
       );
     } finally {
-      setState(() => cargando = false);
+      if (mounted) {
+        setState(() => cargando = false);
+      }
+    }
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[700] : AppColors.keppel,
+      ),
+    );
+  }
+
+  InputDecoration _formFieldDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: AppTextStyles.body.copyWith(
+        color: AppColors.paynesGray.withOpacity(0.7),
+      ),
+      prefixIcon: Icon(icon, color: AppColors.paynesGray, size: 20),
+      filled: true,
+      fillColor: AppColors.white.withOpacity(0.5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide(color: AppColors.keppel, width: 2),
+      ),
+      errorStyle: TextStyle(
+        color: Colors.red[700],
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildFrostTextField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    int maxLines = 1,
+    bool readOnly = false,
+    TextInputType keyboardType = TextInputType.text,
+    VoidCallback? onTap,
+    String? validatorMsg,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        style: AppTextStyles.body,
+        maxLines: maxLines,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        decoration: _formFieldDecoration(label, icon),
+        onTap: onTap,
+        validator: (v) => (v == null || v.isEmpty)
+            ? (validatorMsg ?? "Este campo es requerido")
+            : null,
+      ),
+    );
+  }
+
+  Future<void> _seleccionarFecha() async {
+    DateTime? fecha = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.keppel,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.paynesGray,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.keppel,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (fecha != null) {
+      _fechaVencimientoController.text = fecha.toIso8601String().split('T')[0];
     }
   }
 
@@ -81,30 +200,33 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: AppColors.celeste,
       appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.9),
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Crear Orden Médica",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          "Crear Orden Médica",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-      ),
-      body: Stack(
-        children: [
-          /// 🌅 Fondo completo
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/Fondo.png",
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          /// 📋 Contenedor centrado completamente
-          Center(
+        child: SafeArea(
+          child: Center(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(20),
@@ -112,11 +234,12 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
                 width: size.width * 0.9,
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.93),
+                  color: AppColors.white.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
+                  border: Border.all(color: AppColors.white),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black26,
+                      color: AppColors.paynesGray.withOpacity(0.1),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: Offset(0, 4),
@@ -128,88 +251,68 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        "Registrar Nueva Orden Médica",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF01A4B2),
+                      Text(
+                        "Registrar Nueva Orden",
+                        style: AppTextStyles.headline.copyWith(
+                          color: AppColors.keppel,
                         ),
                       ),
                       const SizedBox(height: 20),
 
-                      /// Tipo de orden
-                      TextFormField(
+                      _buildFrostTextField(
+                        label: "Tipo de Orden",
                         controller: _tipoOrdenController,
-                        decoration: _inputDecoration("Tipo de Orden"),
-                        validator: (value) =>
-                        value!.isEmpty ? "Ingrese el tipo de orden" : null,
+                        icon: Icons.receipt_long_outlined,
+                        validatorMsg: "Ingrese el tipo de orden",
                       ),
-                      const SizedBox(height: 15),
 
-                      /// Descripción
-                      TextFormField(
+                      _buildFrostTextField(
+                        label: "Descripción",
                         controller: _descripcionController,
-                        decoration: _inputDecoration("Descripción"),
-                        validator: (value) =>
-                        value!.isEmpty ? "Ingrese una descripción" : null,
+                        icon: Icons.description_outlined,
+                        validatorMsg: "Ingrese una descripción",
                       ),
-                      const SizedBox(height: 15),
 
-                      /// Fecha de vencimiento
-                      TextFormField(
+                      _buildFrostTextField(
+                        label: "Fecha de Vencimiento",
                         controller: _fechaVencimientoController,
                         readOnly: true,
-                        decoration: _inputDecoration("Fecha de Vencimiento"),
-                        onTap: () async {
-                          DateTime? fecha = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2030),
-                          );
-                          if (fecha != null) {
-                            _fechaVencimientoController.text =
-                            fecha.toIso8601String().split('T')[0];
-                          }
-                        },
-                        validator: (value) =>
-                        value!.isEmpty ? "Seleccione una fecha" : null,
+                        icon: Icons.calendar_today_outlined,
+                        onTap: _seleccionarFecha,
+                        validatorMsg: "Seleccione una fecha",
                       ),
-                      const SizedBox(height: 15),
 
-                      /// Observaciones
-                      TextFormField(
+                      _buildFrostTextField(
+                        label: "Observaciones",
                         controller: _observacionesController,
-                        decoration: _inputDecoration("Observaciones"),
+                        icon: Icons.comment_outlined,
                         maxLines: 3,
                       ),
                       const SizedBox(height: 30),
 
-                      /// Botón de guardar
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           onPressed: cargando ? null : crearOrdenMedica,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF01A4B2),
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.aquamarine,
+                            foregroundColor: AppColors.paynesGray,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                30,
+                              ),
                             ),
                             elevation: 4,
                           ),
                           child: cargando
                               ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                              : const Text(
-                            "Guardar Orden Médica",
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          ),
+                                    color: AppColors.paynesGray,
+                                )
+                              : Text(
+                                    "Guardar Orden Médica",
+                                    style: AppTextStyles.button,
+                                ),
                         ),
                       ),
                     ],
@@ -218,29 +321,7 @@ class _OrdenMedicaPageState extends State<OrdenMedicaPage> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  ///  Estilo base para los TextFields
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.black54),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF01A4B2)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF01A4B2)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF01A4B2), width: 2),
+        ),
       ),
     );
   }

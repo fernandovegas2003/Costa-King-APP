@@ -9,7 +9,7 @@ class AppScaffold extends StatelessWidget {
     super.key,
     required this.title,
     required this.body,
-    this.showBack = true, // por defecto muestra el botón atrás
+    this.showBack = true, 
   });
 
   @override
@@ -25,7 +25,6 @@ class AppScaffold extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // 🔹 Header blanco con botón de atrás
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 decoration: const BoxDecoration(
@@ -53,12 +52,12 @@ class AppScaffold extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48), // espacio simétrico al botón atrás
+                    const SizedBox(width: 48), 
                   ],
                 ),
               ),
 
-              // 🔹 Contenido
+            
               Expanded(child: body),
             ],
           ),

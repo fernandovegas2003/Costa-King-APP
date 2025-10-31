@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
-import '../Citas/LoginCitas.dart'; // Pantalla de citas
-import '../../views/Noticias.dart';    // Pantalla de noticias
-import '../../views/PrincipalPage.dart'; // Pantalla principal
-import '../../views/chats.dart'; // 👈 Cambia esta importación
+import '../Citas/LoginCitas.dart';
+import '../../views/Noticias.dart';
+import '../../views/PrincipalPage.dart';
+import '../../views/chats.dart';
+
+class AppColors {
+  static const Color celeste = Color.fromARGB(255, 95, 151, 149);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF6ABEA7);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle footerLabel = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 12,
+  );
+}
+
 
 class CustomFooterNav extends StatelessWidget {
   final int currentIndex;
@@ -17,7 +36,7 @@ class CustomFooterNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFE8FDFE), // Fondo celeste
+      color: AppColors.celeste,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -56,15 +75,17 @@ class CustomFooterNav extends StatelessWidget {
   }
 
   Widget _buildNavItem(
-      BuildContext context,
-      IconData icon,
-      String label,
-      int index, {
-        bool isCitas = false,
-        bool isNoticias = false,
-        bool isInicio = false,
-        bool isChat = false,
-      }) {
+    BuildContext context,
+    IconData icon,
+    String label,
+    int index, {
+    bool isCitas = false,
+    bool isNoticias = false,
+    bool isInicio = false,
+    bool isChat = false,
+  }) {
+    final bool isSelected = currentIndex == index;
+
     return GestureDetector(
       onTap: () {
         if (isCitas) {
@@ -76,7 +97,7 @@ class CustomFooterNav extends StatelessWidget {
         else if (isChat) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const ChatOptionsPage()), // 👈 Cambiado aquí
+            MaterialPageRoute(builder: (_) => const ChatOptionsPage()),
           );
         } else if (isNoticias) {
           Navigator.push(
@@ -98,21 +119,28 @@ class CustomFooterNav extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.teal,
+              color: isSelected ? AppColors.aquamarine : AppColors.iceBlue,
               borderRadius: BorderRadius.circular(30),
+              boxShadow: isSelected ? [
+                BoxShadow(
+                  color: AppColors.aquamarine.withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4)
+                )
+              ] : [],
             ),
             child: Icon(
               icon,
-              color: Colors.white,
+              color: isSelected ? AppColors.paynesGray : AppColors.paynesGray.withOpacity(0.7),
               size: 24,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
+            style: AppTextStyles.footerLabel.copyWith(
+              color: isSelected ? AppColors.keppel : AppColors.paynesGray.withOpacity(0.7),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           )
         ],

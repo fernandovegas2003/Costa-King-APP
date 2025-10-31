@@ -1,8 +1,28 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../views/Account.dart';
 import '../../views/Carrito.dart';
+
+class AppColors {
+  static const Color celeste = Color.fromARGB(255, 95, 151, 149);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle navbarTitle = TextStyle(
+    color: AppColors.paynesGray,
+    fontWeight: FontWeight.bold,
+    fontSize: 18,
+    fontFamily: _fontFamily,
+  );
+}
 
 class CustomNavbar extends StatefulWidget {
   const CustomNavbar({super.key});
@@ -20,18 +40,17 @@ class _CustomNavbarState extends State<CustomNavbar> {
     _cargarCantidadCarrito();
   }
 
-  // 🔹 CARGAR CANTIDAD DEL CARRITO
   Future<void> _cargarCantidadCarrito() async {
     try {
-      // Usar el mismo token estático y user ID
-      final String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFVzdWFyaW8iOjQ4LCJyb2wiOiJ1c3VhcmlvIiwiY29ycmVvIjoianVhbm11bm96cm9qYXM5NEBnbWFpbC5jb20iLCJpYXQiOjE3NjExOTc0NDMsImV4cCI6NDkxNjk1NzQ0M30.IHCIWNpKs0OEmr8UMaw9Tbs6AHPlAjzLcOU-mZ4B85k";
+      final String token =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZFVzdWFyaW8iOjQ4LCJyb2wiOiJ1c3VhcmlvIiwiY29ycmVvIjoianVhbm11bm96cm9qYXM5NEBnbWFpbC5jb20iLCJpYXQiOjE3NjExOTc0NDMsImV4cCI6NDkxNjk1NzQ0M30.IHCIWNpKs0OEmr8UMaw9Tbs6AHPlAjzLcOU-mZ4B85k";
       final int userId = 48;
 
       final response = await http.get(
-        Uri.parse("https://blesshealth24-7-backecommerce.onrender.com/carrito/$userId"),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse(
+          "https://blesshealth24-7-backecommerce.onrender.com/carrito/$userId",
+        ),
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
@@ -48,17 +67,13 @@ class _CustomNavbarState extends State<CustomNavbar> {
               total += 0;
             }
           }
-
-
           if (mounted) {
             setState(() {
               _cantidadCarrito = total;
             });
           }
         }
-      }
- else if (response.statusCode == 404) {
-        // Carrito vacío
+      } else if (response.statusCode == 404) {
         if (mounted) {
           setState(() {
             _cantidadCarrito = 0;
@@ -72,136 +87,116 @@ class _CustomNavbarState extends State<CustomNavbar> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          color: const Color(0xFFE6F9FA),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Container(
+      color: AppColors.celeste,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildNavIcon(
+            icon: Icons.person_outline,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MiCuentaPage()),
+              );
+            },
+          ),
+
+          Row(
             children: [
-              // 🔹 Botón de cuenta
               Container(
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.teal.withOpacity(0.2),
+                      color: AppColors.paynesGray.withOpacity(0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.person, color: Color(0xFF006D73), size: 24),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MiCuentaPage(),
-                      ),
-                    );
-                  },
-                ),
+                child: Image.asset('assets/images/Logo2.png', height: 32),
               ),
-
-              // 🔹 Logo y nombre
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.teal.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/images/Logo2.png',
-                      height: 32,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    "BlessHealth24",
-                    style: TextStyle(
-                      color: Color(0xFF006D73),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-
-              // 🔹 Ícono de carrito con badge dinámico
-              Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.teal.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.shopping_cart, color: Color(0xFF006D73), size: 24),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CarritoPage(),
-                          ),
-                        ).then((_) {
-                          // 🔹 ACTUALIZAR CANTIDAD AL VOLVER DEL CARRITO
-                          _cargarCantidadCarrito();
-                        });
-                      },
-                    ),
-                  ),
-
-                  // 🔹 BADGE DINÁMICO DEL CARRITO
-                  if (_cantidadCarrito > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          _cantidadCarrito > 99 ? '99+' : _cantidadCarrito.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              const SizedBox(width: 8),
+              const Text("Costa King App", style: AppTextStyles.navbarTitle),
             ],
           ),
-        ),
-      ],
+
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _buildNavIcon(
+                icon: Icons.shopping_cart_outlined,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CarritoPage(),
+                    ),
+                  ).then((_) {
+                    _cargarCantidadCarrito();
+                  });
+                },
+              ),
+
+              if (_cantidadCarrito > 0)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.white, width: 2),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      _cantidadCarrito > 99
+                          ? '99+'
+                          : _cantidadCarrito.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavIcon({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.paynesGray.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: AppColors.paynesGray, size: 24),
+        onPressed: onPressed,
+      ),
     );
   }
 }

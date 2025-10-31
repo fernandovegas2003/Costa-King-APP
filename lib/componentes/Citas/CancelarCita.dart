@@ -2,6 +2,49 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart'; // ✅ ¡IMPORTACIÓN AÑADIDA!
+
+// 🎨 TU PALETA DE COLORES PROFESIONAL
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+// 🖋️ TUS ESTILOS DE TEXTO PROFESIONALES
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp'; // Asegúrate de tener esta fuente
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel, // 🎨 Color
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray, // 🎨 Color
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+}
 
 
 class CancelarCitaPage extends StatefulWidget {
@@ -19,15 +62,18 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
     fetchCitas();
   }
 
+  // --- (TODA TU LÓGICA DE API SE MANTIENE EXACTAMENTE IGUAL) ---
   Future<void> fetchCitas() async {
     final prefs = await SharedPreferences.getInstance();
     final idPaciente = prefs.getInt("idPaciente");
 
     if (idPaciente == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se encontró el usuario en sesión")),
-      );
-      setState(() => isLoading = false);
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se encontró el usuario en sesión"), backgroundColor: Colors.red),
+        );
+        setState(() => isLoading = false);
+      }
       return;
     }
 
@@ -37,16 +83,18 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      setState(() {
-        citas = data["data"]
-            .where((cita) => cita["estado"] == "Pendiente")
-            .toList();
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          citas = data["data"]
+              .where((cita) => cita["estado"] == "Pendiente")
+              .toList();
+          isLoading = false;
+        });
+      }
     } else {
-      setState(() {
-        isLoading = false;
-      });
+      if(mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -61,10 +109,12 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
       body: json.encode({"motivoCancelacion": motivo}),
     );
 
+    if (!mounted) return;
+
     if (response.statusCode == 200) {
       fetchCitas(); // refrescar citas
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cita cancelada correctamente")),
+        SnackBar(content: Text("Cita cancelada correctamente"), backgroundColor: AppColors.keppel), // 🎨 Color
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,10 +126,10 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
     }
   }
 
+  // 🎨 DIÁLOGO REDISEÑADO
   void mostrarDialogoMotivo(int idCita, String fechaHora) {
     final motivoController = TextEditingController();
 
-    // ✅ Verificar 24 horas antes de mostrar el diálogo
     final fechaCita = DateTime.parse(fechaHora);
     final ahora = DateTime.now();
     final diferencia = fechaCita.difference(ahora);
@@ -97,20 +147,34 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Motivo de cancelación"),
+        backgroundColor: AppColors.white, // 🎨 Color
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text("Motivo de cancelación", style: AppTextStyles.headline.copyWith(fontSize: 20)), // 🎨 Estilo
         content: TextField(
           controller: motivoController,
-          decoration: const InputDecoration(
+          style: AppTextStyles.body, // 🎨 Estilo
+          decoration: InputDecoration( // 🎨 Estilo
             hintText: "Escribe el motivo",
+            hintStyle: AppTextStyles.body.copyWith(color: AppColors.paynesGray.withAlpha(128)), // 0.5 opacity
+            filled: true,
+            fillColor: AppColors.iceBlue.withAlpha(128), // 0.5 opacity
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none
+            )
           ),
         ),
         actions: [
           TextButton(
-            child: const Text("Cerrar"),
+            child: Text("Cerrar", style: TextStyle(color: AppColors.paynesGray)), // 🎨 Color
             onPressed: () => Navigator.pop(context),
           ),
           ElevatedButton(
-            child: const Text("Confirmar"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine, // 🎨 Color
+              foregroundColor: AppColors.paynesGray, // 🎨 Color
+            ),
+            child: const Text("Confirmar", style: TextStyle(fontWeight: FontWeight.bold)),
             onPressed: () {
               final motivo = motivoController.text.trim();
               if (motivo.isNotEmpty) {
@@ -124,97 +188,102 @@ class _CancelarCitaPageState extends State<CancelarCitaPage> {
     );
   }
 
+  // 🎨 --- BUILD METHOD REDISEÑADO --- 🎨
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste, // 🎨 Color
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          "Cancelar Cita",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent, // 🎨 Color
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.paynesGray), // 🎨 Color
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        title: Text(
+          "Cancelar Cita",
+          style: AppTextStyles.headline.copyWith(fontSize: 20), // 🎨 Estilo
+        ),
+        centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/Fondo.png",
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        // 🎨 GRADIENTE DE FONDO
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Column(
+        ),
+        child: SafeArea(
+          child: Column(
             children: [
-              const SizedBox(height: 150),
               Expanded(
-                child: Transform.translate(
-                  offset: const Offset(0, -40),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : citas.isEmpty
-                        ? const Center(child: Text("No tienes citas pendientes"))
-                        : ListView.builder(
-                      itemCount: citas.length,
-                      itemBuilder: (context, index) {
-                        final cita = citas[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.all(15),
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator(color: AppColors.aquamarine)) // 🎨 Color
+                    : citas.isEmpty
+                        ? Center(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Médico: ${cita["nombreMedico"]}",
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text("Especialidad: ${cita["especialidad"]}"),
-                                Text("Servicio: ${cita["servicio"]}"),
-                                Text("Fecha: ${cita["fechaHora"]}"),
-                                const SizedBox(height: 10),
-                                ElevatedButton(
-                                  onPressed: () => mostrarDialogoMotivo(
-                                      cita["idCita"], cita["fechaHora"]),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF01A4B2),
-                                    foregroundColor: Colors.white,
-                                    minimumSize: const Size(double.infinity, 45),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: const Text("Cancelar"),
+                                Icon(Icons.calendar_today_outlined, size: 60, color: AppColors.paynesGray.withAlpha(77)), // 0.3 opacity
+                                const SizedBox(height: 16),
+                                Text(
+                                  "No tienes citas pendientes",
+                                  style: AppTextStyles.body.copyWith(color: AppColors.paynesGray.withAlpha(179)), // 0.7 opacity
                                 ),
                               ],
                             ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: citas.length,
+                            itemBuilder: (context, index) {
+                              final cita = citas[index];
+                              // 🎨 TARJETA DE CITA REDISEÑADA
+                              return Card(
+                                color: AppColors.white.withAlpha(179), // 0.7 opacity
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Médico: ${cita["nombreMedico"]}",
+                                          style: AppTextStyles.cardTitle), // 🎨 Estilo
+                                      const SizedBox(height: 4),
+                                      Text("Especialidad: ${cita["especialidad"]}", style: AppTextStyles.cardDescription), // 🎨 Estilo
+                                      Text("Servicio: ${cita["servicio"]}", style: AppTextStyles.cardDescription), // 🎨 Estilo
+                                      Text("Fecha: ${cita["fechaHora"]}", style: AppTextStyles.cardDescription), // 🎨 Estilo
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: () => mostrarDialogoMotivo(
+                                            cita["idCita"], cita["fechaHora"]),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red[700], // Color semántico
+                                          foregroundColor: Colors.white,
+                                          minimumSize: const Size(double.infinity, 45),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30), // 🎨 Redondeado
+                                          ),
+                                        ),
+                                        child: const Text("Cancelar Cita", style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

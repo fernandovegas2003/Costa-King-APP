@@ -1,5 +1,5 @@
-// lib/NPL/NPLScreen.dart
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +8,40 @@ import 'package:http/io_client.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class NPLScreen extends StatefulWidget {
   const NPLScreen({Key? key}) : super(key: key);
@@ -64,59 +98,54 @@ class _NPLScreenState extends State<NPLScreen> {
         });
       }
     } catch (e) {
-      _mostrarSnackBar("Error al seleccionar archivo: $e");
+      _mostrarSnackBar("Error al seleccionar archivo: $e", isError: true);
     }
   }
 
   Future<void> _procesarArchivo() async {
     print("🚀 Entrando a la función de envío...");
-    print("📁 Archivo seleccionado: $_archivoSeleccionado");
-    print("🧍 ID de usuario actual: $_userId");
-
     if (_archivoSeleccionado == null) {
-      _mostrarSnackBar("Por favor selecciona un archivo primero");
+      _mostrarSnackBar(
+        "Por favor selecciona un archivo primero",
+        isError: true,
+      );
       return;
     }
-
     if (_userId == null || _userId!.isEmpty) {
-      _mostrarSnackBar("Error: No se encontró el ID del usuario");
-      print("⚠️ _userId está vacío o nulo");
+      _mostrarSnackBar(
+        "Error: No se encontró el ID del usuario",
+        isError: true,
+      );
       return;
     }
-
     if (!_archivoSeleccionado!.existsSync()) {
-      _mostrarSnackBar("Error: El archivo seleccionado no existe");
+      _mostrarSnackBar(
+        "Error: El archivo seleccionado no existe",
+        isError: true,
+      );
       return;
     }
-
-    setState(() {
-      _procesando = true;
-    });
-
+    setState(() => _procesando = true);
     try {
       print("📤 Preparando solicitud HTTP...");
-
       HttpClient httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
-
       IOClient ioClient = IOClient(httpClient);
-
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://nlp-hc-service.canadacentral.cloudapp.azure.com/api/nlp/process'),
+        Uri.parse(
+          'https://nlp-hc-service.canadacentral.cloudapp.azure.com/api/nlp/process',
+        ),
       );
-
       request.fields['idUsuario'] = _userId!;
       request.fields['idHistoriaClinica'] = '25';
       request.fields['idPaciente'] = _userId!;
       request.fields['generar_excel'] = 'true';
-
       print("📦 Campos que se envían:");
       request.fields.forEach((key, value) {
         print(" - $key: $value");
       });
-
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',
@@ -124,11 +153,11 @@ class _NPLScreenState extends State<NPLScreen> {
           filename: _nombreArchivo,
         ),
       );
-      print("📎 Archivo agregado a la solicitud: ${_archivoSeleccionado!.path}");
-
+      print(
+        "📎 Archivo agregado a la solicitud: ${_archivoSeleccionado!.path}",
+      );
       var response = await ioClient.send(request);
       print("✅ Respuesta del servidor: ${response.statusCode}");
-
       if (response.statusCode == 200) {
         setState(() {
           _procesando = false;
@@ -139,142 +168,124 @@ class _NPLScreenState extends State<NPLScreen> {
         setState(() {
           _procesando = false;
         });
-        _mostrarSnackBar("Error al procesar el archivo: ${response.statusCode}");
-
+        _mostrarSnackBar(
+          "Error al procesar el archivo: ${response.statusCode}",
+        );
         final responseBody = await response.stream.bytesToString();
         print("📄 Cuerpo de respuesta: $responseBody");
       }
-
       ioClient.close();
-
     } catch (e) {
       setState(() {
         _procesando = false;
       });
       print("❌ Error en _procesarArchivo(): $e");
-      _mostrarSnackBar("Error: $e");
+      _mostrarSnackBar("Error: $e", isError: true);
     }
   }
 
   Future<void> _descargarExcel() async {
     if (_userId == null || _userId!.isEmpty) {
-      _mostrarSnackBar("Error: No se encontró el ID del usuario");
+      _mostrarSnackBar(
+        "Error: No se encontró el ID del usuario",
+        isError: true,
+      );
       return;
     }
-
-    setState(() {
-      _procesando = true;
-    });
-
+    setState(() => _procesando = true);
     try {
-      final url = 'https://nlp-hc-service.canadacentral.cloudapp.azure.com/api/nlp/download-excel?userId=$_userId';
-
+      final url =
+          'https://nlp-hc-service.canadacentral.cloudapp.azure.com/api/nlp/download-excel?userId=$_userId';
       print("📥 Iniciando descarga desde: $url");
-
       HttpClient httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
-
       IOClient ioClient = IOClient(httpClient);
-
       var response = await ioClient.get(Uri.parse(url));
-
       print("📊 Respuesta de descarga: ${response.statusCode}");
-
       if (response.statusCode == 200) {
-        // ✅ GUARDAR ARCHIVO EN DESCARGAS DEL DISPOSITIVO
-        final resultadoGuardado = await _guardarArchivoEnDescargasGlobales(response.bodyBytes);
-
+        final resultadoGuardado = await _guardarArchivoEnDescargasGlobales(
+          response.bodyBytes,
+        );
         setState(() {
           _procesando = false;
         });
-
         if (resultadoGuardado) {
           _mostrarNotificacionDescargaExito();
         } else {
-          _mostrarSnackBar("Error al guardar el archivo en Descargas");
+          _mostrarSnackBar(
+            "Error al guardar el archivo en Descargas",
+            isError: true,
+          );
         }
       } else {
         setState(() {
           _procesando = false;
         });
-        _mostrarSnackBar("Error al descargar el Excel: ${response.statusCode}");
+        _mostrarSnackBar(
+          "Error al descargar el Excel: ${response.statusCode}",
+          isError: true,
+        );
       }
-
       ioClient.close();
-
     } catch (e) {
       setState(() {
         _procesando = false;
       });
       print("❌ Error en _descargarExcel(): $e");
-      _mostrarSnackBar("Error al descargar: $e");
+      _mostrarSnackBar("Error al descargar: $e", isError: true);
     }
   }
 
   Future<bool> _guardarArchivoEnDescargasGlobales(List<int> bytes) async {
     try {
-      // ✅ SOLICITAR PERMISOS DE ALMACENAMIENTO
       if (Platform.isAndroid) {
-        // En Android 11 o superior se requiere MANAGE_EXTERNAL_STORAGE
         if (await Permission.manageExternalStorage.isGranted == false) {
           final status = await Permission.manageExternalStorage.request();
           if (!status.isGranted) {
-            _mostrarSnackBar("Se necesitan permisos para acceder al almacenamiento");
+            _mostrarSnackBar(
+              "Se necesitan permisos para acceder al almacenamiento",
+              isError: true,
+            );
             return false;
           }
         }
       }
-
-
-      // ✅ OBTENER RUTA DE DESCARGAS USANDO SOLO path_provider
       Directory downloadsDirectory;
-
       try {
         if (Platform.isAndroid) {
-          // Para Android, intentar obtener directorio de descargas
-          // Usamos getExternalStorageDirectory() que apunta a /storage/emulated/0/Android/data/com.example.bless_health24/files
-          final externalDir = await getExternalStorageDirectory();
-          if (externalDir != null) {
-            // Crear subcarpeta Download dentro del directorio externo
-            downloadsDirectory = Directory('/storage/emulated/0/Download');
-            if (!downloadsDirectory.existsSync()) {
-              downloadsDirectory.createSync(recursive: true);
-            }
-            print("📁 Usando directorio externo/Download: ${downloadsDirectory.path}");
-          } else {
-            throw Exception("No se pudo obtener directorio externo");
+          downloadsDirectory = Directory('/storage/emulated/0/Download');
+          if (!downloadsDirectory.existsSync()) {
+            downloadsDirectory.createSync(recursive: true);
           }
+          print(
+            "📁 Usando directorio externo/Download: ${downloadsDirectory.path}",
+          );
         } else {
-          // Para iOS, usar directorio de documentos
           downloadsDirectory = await getApplicationDocumentsDirectory();
-          print("📁 Usando directorio de documentos: ${downloadsDirectory.path}");
+          print(
+            "📁 Usando directorio de documentos: ${downloadsDirectory.path}",
+          );
         }
       } catch (e) {
         print("❌ Error obteniendo directorio: $e");
-        // Fallback: usar directorio temporal
         downloadsDirectory = Directory.systemTemp;
-        print("📁 Usando directorio temporal como fallback: ${downloadsDirectory.path}");
+        print(
+          "📁 Usando directorio temporal como fallback: ${downloadsDirectory.path}",
+        );
       }
-
-      // ✅ CREAR NOMBRE DEL ARCHIVO
       final fecha = DateTime.now();
-      final nombreArchivo = 'Reporte_NLP_${_userId}_${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}_${fecha.hour}${fecha.minute}.xlsx';
+      final nombreArchivo =
+          'Reporte_NLP_${_userId}_${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}_${fecha.hour}${fecha.minute}.xlsx';
       final filePath = '${downloadsDirectory.path}/$nombreArchivo';
-
       print("💾 Guardando archivo en: $filePath");
-
-      // ✅ GUARDAR ARCHIVO
       final file = File(filePath);
       await file.writeAsBytes(bytes, flush: true);
-
-      // ✅ VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
       if (file.existsSync()) {
         final fileSize = await file.length();
         setState(() {
           _rutaArchivoGuardado = filePath;
         });
-
         print("✅ Archivo Excel guardado exitosamente");
         print("📊 Tamaño del archivo: $fileSize bytes");
         print("📍 Ruta: $filePath");
@@ -283,7 +294,6 @@ class _NPLScreenState extends State<NPLScreen> {
         print("❌ El archivo no se guardó correctamente");
         return false;
       }
-
     } catch (e) {
       print("❌ Error al guardar archivo: $e");
       return false;
@@ -293,7 +303,7 @@ class _NPLScreenState extends State<NPLScreen> {
   void _mostrarNotificacionDescargaExito() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
+        content: const Row(
           children: [
             Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 8),
@@ -315,32 +325,28 @@ class _NPLScreenState extends State<NPLScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.keppel,
         duration: Duration(seconds: 6),
         action: SnackBarAction(
           label: "ABRIR ARCHIVO",
-          textColor: Colors.white,
+          textColor: AppColors.white,
           onPressed: () {
             _abrirArchivoDescargado();
           },
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   Future<void> _abrirArchivoDescargado() async {
     if (_rutaArchivoGuardado == null) {
-      _mostrarSnackBar("No se encontró la ruta del archivo");
+      _mostrarSnackBar("No se encontró la ruta del archivo", isError: true);
       return;
     }
-
     try {
       final result = await OpenFile.open(_rutaArchivoGuardado!);
-
       if (result.type != ResultType.done) {
         _mostrarDialogoUbicacionArchivo();
       }
@@ -355,23 +361,33 @@ class _NPLScreenState extends State<NPLScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              Icon(Icons.download_done, color: Color(0xFF01A4B2)),
+              Icon(Icons.download_done, color: AppColors.keppel),
               SizedBox(width: 8),
-              Text("Archivo Guardado"),
+              Text(
+                "Archivo Guardado",
+                style: AppTextStyles.headline.copyWith(fontSize: 20),
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("El archivo Excel se ha guardado exitosamente."),
+              Text(
+                "El archivo Excel se ha guardado exitosamente.",
+                style: AppTextStyles.body,
+              ),
               SizedBox(height: 16),
               Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: AppColors.iceBlue.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -379,13 +395,18 @@ class _NPLScreenState extends State<NPLScreen> {
                   children: [
                     Text(
                       "📁 Ubicación del archivo:",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 8),
                     if (_rutaArchivoGuardado != null)
                       SelectableText(
                         _rutaArchivoGuardado!,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        style: AppTextStyles.body.copyWith(
+                          fontSize: 12,
+                          color: AppColors.paynesGray.withOpacity(0.7),
+                        ),
                       ),
                   ],
                 ),
@@ -393,7 +414,10 @@ class _NPLScreenState extends State<NPLScreen> {
               SizedBox(height: 12),
               Text(
                 "Puedes encontrar el archivo en la carpeta de descargas de tu dispositivo o usando un administrador de archivos.",
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: AppTextStyles.body.copyWith(
+                  fontSize: 12,
+                  color: AppColors.paynesGray.withOpacity(0.7),
+                ),
               ),
             ],
           ),
@@ -402,7 +426,10 @@ class _NPLScreenState extends State<NPLScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("Cerrar"),
+              child: Text(
+                "Cerrar",
+                style: TextStyle(color: AppColors.paynesGray),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -410,10 +437,13 @@ class _NPLScreenState extends State<NPLScreen> {
                 _mostrarInstruccionesEncontrarArchivo();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF01A4B2),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.aquamarine,
+                foregroundColor: AppColors.paynesGray,
               ),
-              child: Text("¿Cómo encontrarlo?"),
+              child: Text(
+                "¿Cómo encontrarlo?",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
@@ -426,12 +456,22 @@ class _NPLScreenState extends State<NPLScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Encontrar tu archivo Excel"),
+          backgroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            "Encontrar tu archivo",
+            style: AppTextStyles.headline.copyWith(fontSize: 20),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Para encontrar tu archivo guardado:"),
+              Text(
+                "Para encontrar tu archivo guardado:",
+                style: AppTextStyles.body,
+              ),
               SizedBox(height: 16),
               _buildPasoInstruccion(
                 icon: Icons.phone_android,
@@ -453,22 +493,32 @@ class _NPLScreenState extends State<NPLScreen> {
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: AppColors.iceBlue.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   "💡 El archivo estará accesible desde cualquier app de archivos",
-                  style: TextStyle(fontSize: 12),
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 12,
+                    color: AppColors.paynesGray.withOpacity(0.8),
+                  ),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("Entendido"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.aquamarine,
+                foregroundColor: AppColors.paynesGray,
+              ),
+              child: const Text(
+                "Entendido",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
@@ -482,19 +532,22 @@ class _NPLScreenState extends State<NPLScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Color(0xFF01A4B2)),
+          Icon(icon, size: 18, color: AppColors.keppel),
           SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          Expanded(
+            child: Text(text, style: AppTextStyles.body.copyWith(fontSize: 14)),
+          ),
         ],
       ),
     );
   }
 
-  void _mostrarSnackBar(String mensaje) {
+  void _mostrarSnackBar(String mensaje, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
         duration: const Duration(seconds: 3),
+        backgroundColor: isError ? Colors.red[700] : AppColors.keppel,
       ),
     );
   }
@@ -511,162 +564,270 @@ class _NPLScreenState extends State<NPLScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          "Procesamiento NPL",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.paynesGray),
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        title: Text(
+          "Procesamiento NPL",
+          style: AppTextStyles.headline.copyWith(fontSize: 20),
+        ),
+        centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/Fondo.png",
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight:
+                    MediaQuery.of(context).size.height -
+                    (Scaffold.of(context).appBarMaxHeight ?? 0) -
+                    MediaQuery.of(context).padding.top,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.analytics_outlined, size: 64, color: Color(0xFF01A4B2)),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Procesamiento de Archivos NPL",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                    textAlign: TextAlign.center,
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 40,
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Sube un archivo para procesar y generar un reporte en Excel",
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-
-                  ElevatedButton(
-                    onPressed: _procesando ? null : _seleccionarArchivo,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF01A4B2),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.attach_file),
-                        SizedBox(width: 8),
-                        Text("Seleccionar Archivo"),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  if (_nombreArchivo != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
+                  child: Center(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.insert_drive_file, color: Color(0xFF01A4B2)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(_nombreArchivo!, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
+                        color: AppColors.white.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.paynesGray.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
-                          IconButton(icon: Icon(Icons.close, color: Colors.red), onPressed: _limpiarSeleccion),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.analytics_outlined,
+                            size: 64,
+                            color: AppColors.keppel,
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            "Procesamiento de Archivos NPL",
+                            style: AppTextStyles.headline.copyWith(
+                              fontSize: 18,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Sube un archivo para procesar y generar un reporte en Excel",
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.paynesGray.withOpacity(0.7),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 30),
 
-                  if (_archivoSeleccionado != null && !_procesadoExitoso)
-                    ElevatedButton(
-                      onPressed: _procesando ? null : _procesarArchivo,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF01A4B2),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: _procesando
-                          ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-                          SizedBox(width: 10),
-                          Text("Procesando..."),
-                        ],
-                      )
-                          : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.play_arrow),
-                          SizedBox(width: 8),
-                          Text("Procesar Archivo"),
-                        ],
-                      ),
-                    ),
+                          ElevatedButton(
+                            onPressed: _procesando ? null : _seleccionarArchivo,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.aquamarine,
+                              foregroundColor: AppColors.paynesGray,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.attach_file),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Seleccionar Archivo",
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 15),
 
-                  if (_procesadoExitoso) ...[
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: _procesando ? null : _descargarExcel,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: _procesando
-                          ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-                          SizedBox(width: 10),
-                          Text("Descargando..."),
-                        ],
-                      )
-                          : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.download),
-                          SizedBox(width: 8),
-                          Text("Descargar Excel"),
+                          if (_nombreArchivo != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.keppel.withOpacity(0.5),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.insert_drive_file_outlined,
+                                    color: AppColors.keppel,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _nombreArchivo!,
+                                      style: AppTextStyles.body.copyWith(
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.close,
+                                      color: Colors.red[700],
+                                    ),
+                                    onPressed: _limpiarSeleccion,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+
+                          if (_archivoSeleccionado != null &&
+                              !_procesadoExitoso)
+                            ElevatedButton(
+                              onPressed: _procesando ? null : _procesarArchivo,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.aquamarine,
+                                foregroundColor: AppColors.paynesGray,
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: _procesando
+                                  ? Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.paynesGray,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          "Procesando...",
+                                          style: AppTextStyles.button.copyWith(
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.play_arrow),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "Procesar Archivo",
+                                          style: AppTextStyles.button.copyWith(
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+
+                          if (_procesadoExitoso) ...[
+                            const SizedBox(height: 15),
+                            ElevatedButton(
+                              onPressed: _procesando ? null : _descargarExcel,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.keppel,
+                                foregroundColor: AppColors.white,
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: _procesando
+                                  ? Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          "Descargando...",
+                                          style: AppTextStyles.button.copyWith(
+                                            color: AppColors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.download),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "Descargar Excel",
+                                          style: AppTextStyles.button.copyWith(
+                                            color: AppColors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextButton(
+                              onPressed: _limpiarSeleccion,
+                              child: Text(
+                                "Procesar otro archivo",
+                                style: TextStyle(
+                                  color: AppColors.paynesGray.withOpacity(0.8),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: _limpiarSeleccion,
-                      child: const Text("Procesar otro archivo", style: TextStyle(color: Color(0xFF01A4B2))),
-                    ),
-                  ],
-                ],
+                  ),
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

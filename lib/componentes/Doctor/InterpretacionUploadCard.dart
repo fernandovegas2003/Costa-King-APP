@@ -1,9 +1,43 @@
+import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'archivos_local_helper.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class InterpretacionUploadCard extends StatefulWidget {
   final int? idHistoriaClinica;
@@ -35,7 +69,10 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
 
   Future<void> _guardar() async {
     if (!_puedeGuardar) {
-      _mostrarMensaje('Selecciona un archivo antes de guardar.');
+      _showSnack(
+        'Selecciona un archivo antes de guardar.',
+        isError: true,
+      );
       return;
     }
 
@@ -55,21 +92,17 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
         _tipoArchivo = null;
       });
       widget.onSaved?.call();
-      _mostrarMensaje('Archivo guardado correctamente.');
+      _showSnack('Archivo guardado correctamente.');
     } catch (e) {
-      _mostrarMensaje('No se pudo guardar el archivo: $e');
+      _showSnack(
+        'No se pudo guardar el archivo: $e',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _guardando = false);
       }
     }
-  }
-
-  void _mostrarMensaje(String mensaje) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Future<void> _tomarFoto() async {
@@ -85,7 +118,7 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
         xfile.name.isNotEmpty ? xfile.name : _nombreTemporal('jpg'),
       );
     } catch (e) {
-      _mostrarMensaje('No se pudo tomar la foto: $e');
+      _showSnack('No se pudo tomar la foto: $e', isError: true);
     }
   }
 
@@ -99,7 +132,10 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
         xfile.name.isNotEmpty ? xfile.name : _nombreTemporal('jpg'),
       );
     } catch (e) {
-      _mostrarMensaje('Error al seleccionar imagen: $e');
+      _showSnack(
+        'Error al seleccionar imagen: $e',
+        isError: true,
+      );
     }
   }
 
@@ -113,7 +149,10 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
       }
       _actualizarSeleccion(file.bytes!, file.name);
     } catch (e) {
-      _mostrarMensaje('Error al seleccionar documento: $e');
+      _showSnack(
+        'Error al seleccionar documento: $e',
+        isError: true,
+      );
     }
   }
 
@@ -130,6 +169,18 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
     return 'captura_$ts.$extension';
   }
 
+  void _showSnack(String mensaje, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: isError
+            ? Colors.red[700]
+            : AppColors.keppel,
+      ),
+    );
+  }
+
   IconData _iconoPorTipo() {
     final tipo = (_tipoArchivo ?? '').toLowerCase();
     if (tipo.startsWith('image/')) return Icons.image_outlined;
@@ -141,22 +192,83 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
     return Icons.insert_drive_file_outlined;
   }
 
+  void _visualizarArchivo(Map<String, dynamic> archivo) {
+    final nombre = archivo['nombreArchivo'] ?? archivo['nombre'] ?? 'Archivo';
+    final b64 = archivo['base64Data'];
+    final tipo = (archivo['tipoArchivo'] ?? '').toString();
+
+    if (b64 is String && tipo.startsWith('image/')) {
+      try {
+        final bytes = base64Decode(b64);
+        showDialog(
+          context: context,
+          builder: (ctx) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: InteractiveViewer(
+              child: Image.memory(bytes, fit: BoxFit.contain),
+            ),
+          ),
+        );
+        return;
+      } catch (_) {}
+    }
+
+    if (b64 is String && tipo.contains('text')) {
+      try {
+        final bytes = base64Decode(b64);
+        final contenido = utf8.decode(bytes);
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              nombre,
+              style: AppTextStyles.headline.copyWith(fontSize: 20),
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(contenido, style: AppTextStyles.body),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.aquamarine,
+                  foregroundColor: AppColors.paynesGray,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text(
+                  'Cerrar',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        );
+        return;
+      } catch (_) {}
+    }
+    _showSnack(
+      'No se puede previsualizar este tipo de archivo ($tipo)',
+      isError: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final nombreMostrado = _nombreArchivo ?? 'Sin archivo seleccionado';
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: AppColors.white.withOpacity(0.7),
+      elevation: 2,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF00B0BD), Color(0xFF59CADA)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.white),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -165,23 +277,25 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.iceBlue.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.keppel.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 children: [
                   Icon(
                     _iconoPorTipo(),
                     size: 32,
-                    color: const Color(0xFF00B0BD),
+                    color: AppColors.keppel,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       nombreMostrado,
-                      style: const TextStyle(
+                      style: AppTextStyles.body.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -196,8 +310,8 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
               child: ElevatedButton(
                 onPressed: _puedeGuardar ? _guardar : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7DD1D8),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.aquamarine,
+                  foregroundColor: AppColors.paynesGray,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -209,10 +323,13 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: AppColors.paynesGray,
                         ),
                       )
-                    : const Text('Guardar', style: TextStyle(fontSize: 16)),
+                    : Text(
+                        'Guardar',
+                        style: AppTextStyles.button.copyWith(fontSize: 16),
+                      ),
               ),
             ),
             const SizedBox(height: 16),
@@ -248,13 +365,23 @@ class _InterpretacionUploadCardState extends State<InterpretacionUploadCard> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _guardando ? null : onTap,
-        icon: Icon(icon, color: Colors.black87),
+        icon: Icon(icon, color: AppColors.paynesGray),
         label: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text(label, style: const TextStyle(color: Colors.black87)),
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Text(
+            label,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.paynesGray,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.black54, width: 1.2),
+          side: BorderSide(
+            color: AppColors.keppel.withOpacity(0.7),
+            width: 1.2,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

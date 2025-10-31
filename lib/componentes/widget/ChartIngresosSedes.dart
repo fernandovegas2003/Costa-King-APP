@@ -13,7 +13,7 @@ class ChartIngresosSedes extends StatelessWidget {
       return const Center(child: Text("No hay datos disponibles"));
     }
 
-    // 🔹 Agrupar por especialidad
+ 
     final Map<String, List<Map<String, dynamic>>> especialidadesMap = {};
     for (var item in ingresosSedeEspecialidad) {
       final especialidad = item["nombreEspecialidad"] ?? "Sin especialidad";
@@ -27,7 +27,6 @@ class ChartIngresosSedes extends StatelessWidget {
         final especialidad = entry.key;
         final data = entry.value;
 
-        // 🔹 Agrupar por sede (sumar ingresos de la misma sede si existen varios)
         final Map<String, double> ingresosPorSede = {};
         for (var e in data) {
           final sede = e["nombreSede"] ?? "Desconocida";
@@ -40,7 +39,7 @@ class ChartIngresosSedes extends StatelessWidget {
 
         final maxY = valores.isEmpty
             ? 10.0
-            : valores.reduce(max) / 1000; // Mostrar en miles
+            : valores.reduce(max) / 1000; 
 
         return Container(
           margin: const EdgeInsets.only(bottom: 24),
@@ -59,7 +58,7 @@ class ChartIngresosSedes extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🔹 Título de la especialidad
+     
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
@@ -72,7 +71,6 @@ class ChartIngresosSedes extends StatelessWidget {
                 ),
               ),
 
-              // 🔹 Gráfico de barras
               SizedBox(
                 height: 280,
                 child: BarChart(
@@ -122,7 +120,7 @@ class ChartIngresosSedes extends StatelessWidget {
                     ),
                     maxY: maxY + 50,
                     barGroups: List.generate(sedes.length, (i) {
-                      final ingreso = valores[i] / 1000; // Miles
+                      final ingreso = valores[i] / 1000; // es
                       return BarChartGroupData(
                         x: i,
                         barRods: [
@@ -140,7 +138,6 @@ class ChartIngresosSedes extends StatelessWidget {
                 ),
               ),
 
-              // 🔹 Etiquetas con valores
               const SizedBox(height: 8),
               Wrap(
                 alignment: WrapAlignment.center,

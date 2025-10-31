@@ -6,6 +6,53 @@ import '../componentes/navbar/navbar.dart';
 import '../componentes/navbar/footer.dart';
 import '../views/ViewMed.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 12,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardPrice = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
+
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -19,7 +66,7 @@ class _HomePageState extends State<HomePage> {
 
   bool _showNavbar = true;
   int _selectedIndex = 0;
-  bool _showModal = true; // Controla si mostrar el modal
+  bool _showModal = true;
 
   List<Map<String, dynamic>> _productos = [];
   Map<String, dynamic>? _versiculoDelDia;
@@ -32,6 +79,12 @@ class _HomePageState extends State<HomePage> {
     fetchProductos();
     _fetchVersiculoDelDia();
     _fetchLecturasDiarias();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_versiculoDelDia == null && _lecturasDiarias == null) {
+        setState(() => _showModal = true);
+      }
+    });
   }
 
   void _handleScroll() {
@@ -44,7 +97,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// 🔹 Trae todos los productos
   Future<void> fetchProductos() async {
     try {
       final response = await http.get(
@@ -65,7 +117,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// 🔹 Obtener versículo del día
   Future<void> _fetchVersiculoDelDia() async {
     try {
       final response = await http.get(
@@ -85,7 +136,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// 🔹 Obtener lecturas diarias
   Future<void> _fetchLecturasDiarias() async {
     try {
       final response = await http.get(
@@ -105,7 +155,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// 🔹 Buscar productos
   Future<void> buscarProductos(String query) async {
     if (query.isEmpty) {
       fetchProductos();
@@ -150,10 +199,9 @@ class _HomePageState extends State<HomePage> {
     }).toList();
   }
 
-  /// 🔹 Widget del Modal con Versículo y Lecturas - AZUL OSCURO
   Widget _buildLecturasModal() {
     return Dialog(
-      backgroundColor: const Color(0xFF1E3A5F), // Azul oscuro elegante
+      backgroundColor: AppColors.paynesGray,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -169,7 +217,6 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header del modal
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -178,16 +225,16 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.iceBlue,
                       ),
                     ),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppColors.white.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: const Icon(Icons.close, color: AppColors.iceBlue),
                         onPressed: () => setState(() => _showModal = false),
                       ),
                     ),
@@ -195,7 +242,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Versículo del día
                 if (_versiculoDelDia != null) ...[
                   _buildSeccion(
                     titulo: "🌟 Versículo del Día",
@@ -219,7 +265,6 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 20),
                 ],
 
-                // Lecturas diarias
                 if (_lecturasDiarias != null) ...[
                   if (_lecturasDiarias!['primera_lectura'] != null)
                     _buildSeccion(
@@ -242,36 +287,31 @@ class _HomePageState extends State<HomePage> {
                     ),
                 ],
 
-                // Loading state
                 if (_versiculoDelDia == null && _lecturasDiarias == null)
                   const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.aquamarine),
                     ),
                   ),
 
                 const SizedBox(height: 20),
 
-                // Botón para cerrar
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF1E3A5F),
+                      backgroundColor: AppColors.aquamarine,
+                      foregroundColor: AppColors.paynesGray,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 3,
                     ),
                     onPressed: () => setState(() => _showModal = false),
                     child: const Text(
                       "Continuar a la Tienda",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTextStyles.button,
                     ),
                   ),
                 ),
@@ -292,7 +332,7 @@ class _HomePageState extends State<HomePage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.aquamarine,
           ),
         ),
         const SizedBox(height: 10),
@@ -306,9 +346,9 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: AppColors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: AppColors.keppel.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,17 +358,17 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(
               fontSize: 14,
               fontStyle: FontStyle.italic,
-              color: Colors.white,
+              color: AppColors.white,
               height: 1.4,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             referencia + (traduccion.isNotEmpty ? ' ($traduccion)' : ''),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Colors.white70,
+              color: AppColors.iceBlue.withOpacity(0.7),
             ),
             textAlign: TextAlign.right,
           ),
@@ -342,15 +382,15 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: AppColors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: AppColors.keppel.withOpacity(0.3)),
       ),
       child: Text(
         texto,
         style: const TextStyle(
           fontSize: 13,
-          color: Colors.white,
+          color: AppColors.white,
           height: 1.4,
         ),
       ),
@@ -367,96 +407,99 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: _showNavbar ? null : 0,
-                  child: const CustomNavbar(),
-                ),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: _showNavbar ? null : 0,
+                    child: const CustomNavbar(),
+                  ),
 
-                // 🔹 Barra de búsqueda
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search, color: Colors.grey),
-                        hintText: "Busca aquí tus productos",
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      onChanged: (value) => buscarProductos(value),
+                      child: TextField(
+                        controller: _searchController,
+                        style: AppTextStyles.body,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search, color: AppColors.paynesGray),
+                          hintText: "Busca aquí tus productos",
+                          hintStyle: AppTextStyles.body.copyWith(color: AppColors.paynesGray.withOpacity(0.7)),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        ),
+                        onChanged: (value) => buscarProductos(value),
+                      ),
                     ),
                   ),
-                ),
 
-                // Contenido scrollable
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.65,
-                        ),
-                        itemCount: _productos.length,
-                        itemBuilder: (context, index) {
-                          final producto = _productos[index];
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: 0.65,
+                              ),
+                          itemCount: _productos.length,
+                          itemBuilder: (context, index) {
+                            final producto = _productos[index];
 
-                          return ProductCard(
-                            imageUrl: producto["imagen"],
-                            title: producto["nombre"],
-                            description: producto["promo"],
-                            price: producto["precio"].toString(),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductoDetallePage(
-                                    idProducto: producto["id"],
+                            return ProductCard(
+                              imageUrl: producto["imagen"],
+                              title: producto["nombre"],
+                              description: producto["promo"],
+                              price: producto["precio"].toString(),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductoDetallePage(
+                                      idProducto: producto["id"],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            // 🔹 Modal de lecturas (se muestra al inicio)
-            if (_showModal) _buildLecturasModal(),
-          ],
+              if (_showModal) _buildLecturasModal(),
+            ],
+          ),
         ),
       ),
 
       bottomNavigationBar: SafeArea(
+        bottom: true,
         child: CustomFooterNav(
           currentIndex: _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
@@ -466,7 +509,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-/// --- Tarjeta del producto ---
 class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String title;
@@ -488,41 +530,57 @@ class ProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 3,
+        color: AppColors.white.withOpacity(0.8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: ClipRRect(
                 borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(12)),
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.keppel),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.broken_image_outlined, color: AppColors.paynesGray),
+                    );
+                  },
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(6.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.cardTitle,
+                  ),
                   const SizedBox(height: 4),
-                  Text(description,
-                      style:
-                      const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    description,
+                    style: AppTextStyles.cardDescription,
+                  ),
                   const SizedBox(height: 6),
-                  Text(price,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal)),
+                  Text(
+                    "\$$price",
+                    style: AppTextStyles.cardPrice,
+                  ),
                 ],
               ),
             ),

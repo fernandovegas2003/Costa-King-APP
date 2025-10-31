@@ -1,10 +1,54 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 13,
+    fontFamily: _fontFamily,
+  );
+}
+
 class RemediosPage extends StatelessWidget {
   final Map<String, dynamic> remedios;
-  final int _selectedIndex = 1;
+  final int _selectedIndex =
+      1;
 
   const RemediosPage({super.key, required this.remedios});
 
@@ -13,131 +57,136 @@ class RemediosPage extends StatelessWidget {
     final List lista = remedios['remedios'] ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FDFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Header con estilo farmacia natural
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF2E7D32),
-                    const Color(0xFF4CAF50),
-                  ],
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.eco,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Remedios Naturales",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Tratamientos caseros y medicina alternativa",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.keppel,
+                      AppColors.paynesGray,
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Medicina Natural y Tradicional",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
                   ),
-                ],
-              ),
-            ),
-
-            // 🔹 Contenido principal
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                ),
                 child: Column(
                   children: [
-                    // 🔹 Tarjeta de advertencia
-                    if (remedios['advertencia'] != null)
-                      _buildAdvertenciaCard(),
-
-                    const SizedBox(height: 20),
-
-                    // 🔹 Sección de remedios
-                    if (lista.isNotEmpty)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSeccionTitulo(
-                            icon: Icons.spa,
-                            title: "Remedios Caseros Recomendados",
-                            subtitle: "Tratamientos naturales basados en evidencia",
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 16),
-                          ...lista.map((item) => _buildRemedioCard(item)),
-                        ],
+                          child: const Icon(
+                            Icons.eco,
+                            color: AppColors.white,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Remedios Naturales",
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              Text(
+                                "Tratamientos caseros y medicina alternativa",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Medicina Natural y Tradicional",
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            // 🔹 Footer
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                // La navegación ya está manejada en el CustomFooterNav
-              },
-            ),
-          ],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      if (remedios['advertencia'] != null)
+                        _buildAdvertenciaCard(),
+
+                      const SizedBox(height: 20),
+
+                      if (lista.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSeccionTitulo(
+                              icon: Icons.spa,
+                              title: "Remedios Caseros Recomendados",
+                              subtitle:
+                                  "Tratamientos naturales basados en evidencia",
+                            ),
+                            const SizedBox(height: 16),
+                            ...lista.map((item) => _buildRemedioCard(item)),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -163,7 +212,7 @@ class RemediosPage extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.orange,
               shape: BoxShape.circle,
             ),
@@ -199,21 +248,15 @@ class RemediosPage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.white),
       ),
       child: Row(
         children: [
           Icon(
             icon,
-            color: Color(0xFF2E7D32),
+            color: AppColors.aquamarine,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -223,17 +266,12 @@ class RemediosPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
-                  ),
+                  style: AppTextStyles.cardTitle,
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
+                  style: AppTextStyles.cardDescription.copyWith(
+                    color: AppColors.paynesGray.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -248,37 +286,29 @@ class RemediosPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: ExpansionTile(
+        iconColor: AppColors.keppel,
+        collapsedIconColor: AppColors.keppel,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Color(0xFF4CAF50).withOpacity(0.1),
+            color: AppColors.keppel.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.eco,
-            color: Color(0xFF2E7D32),
+            color: AppColors.keppel,
             size: 20,
           ),
         ),
         title: Text(
           item['nombre'] ?? "Remedio Natural",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2E7D32),
-            fontSize: 16,
-          ),
+          style: AppTextStyles.headline.copyWith(fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,9 +316,8 @@ class RemediosPage extends StatelessWidget {
             if (item['evidencia'] != null)
               Text(
                 item['evidencia'],
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 13,
+                style: AppTextStyles.cardDescription.copyWith(
+                  color: AppColors.paynesGray.withOpacity(0.7),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -301,7 +330,7 @@ class RemediosPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFFE8F5E8),
+              color: AppColors.iceBlue.withOpacity(0.3),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
@@ -309,36 +338,26 @@ class RemediosPage extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // 🔹 Cómo usar
                 _buildInfoSection(
-                  icon: Icons.help,
+                  icon: Icons.help_outline,
                   title: "📝 Cómo usar",
                   content: item['como_usar'] ?? "",
                 ),
-
                 const SizedBox(height: 12),
-
-                // 🔹 Dosis recomendada
                 _buildInfoSection(
-                  icon: Icons.science,
+                  icon: Icons.science_outlined,
                   title: "💊 Dosis recomendada",
                   content: item['dosis_recomendada'] ?? "",
                 ),
-
                 const SizedBox(height: 12),
-
-                // 🔹 Mecanismo de acción
                 _buildInfoSection(
-                  icon: Icons.psychology,
+                  icon: Icons.psychology_outlined,
                   title: "🔬 Mecanismo de acción",
                   content: item['mecanismo'] ?? "",
                 ),
-
                 const SizedBox(height: 12),
-
-                // 🔹 Precauciones
                 _buildInfoSection(
-                  icon: Icons.warning,
+                  icon: Icons.warning_amber_rounded,
                   title: "⚠️ Precauciones",
                   content: item['precauciones'] ?? "",
                   isWarning: true,
@@ -368,7 +387,7 @@ class RemediosPage extends StatelessWidget {
       chipColor = Colors.blue;
       chipText = "Evidencia Tradicional";
     } else {
-      chipColor = Colors.grey;
+      chipColor = AppColors.paynesGray;
       chipText = "Evidencia";
     }
 
@@ -396,32 +415,36 @@ class RemediosPage extends StatelessWidget {
     required String content,
     bool isWarning = false,
   }) {
+    final Color color = isWarning
+        ? Colors.orange[800]!
+        : AppColors.keppel;
+    final Color bgColor = isWarning
+        ? Colors.orange[50]!
+        : AppColors.white.withOpacity(0.7);
+    final Color borderColor = isWarning
+        ? Colors.orange[100]!
+        : AppColors.keppel.withOpacity(0.3);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isWarning ? Colors.orange[50] : Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isWarning ? Colors.orange[100]! : Colors.green[100]!,
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: isWarning ? Colors.orange : Color(0xFF2E7D32),
-                size: 16,
-              ),
+              Icon(icon, color: color, size: 16),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(
+                style: AppTextStyles.body.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isWarning ? Colors.orange[800] : Color(0xFF2E7D32),
+                  color: color,
                   fontSize: 14,
                 ),
               ),
@@ -430,10 +453,11 @@ class RemediosPage extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             content,
-            style: TextStyle(
-              color: isWarning ? Colors.orange[700] : Colors.grey[700],
+            style: AppTextStyles.body.copyWith(
+              color: isWarning
+                  ? Colors.orange[700]
+                  : AppColors.paynesGray,
               fontSize: 13,
-              height: 1.4,
             ),
           ),
         ],

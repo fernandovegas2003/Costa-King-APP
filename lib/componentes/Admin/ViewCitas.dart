@@ -1,6 +1,49 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.paynesGray, //
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray, //
+    fontSize: 14,
+    fontFamily: _fontFamily,
+  );
+}
 
 class VerCitasAdminPage extends StatefulWidget {
   const VerCitasAdminPage({Key? key}) : super(key: key);
@@ -20,7 +63,9 @@ class _VerCitasAdminPageState extends State<VerCitasAdminPage> {
   }
 
   Future<void> obtenerCitas() async {
-    final url = Uri.parse('https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas');
+    final url = Uri.parse(
+      'https://blesshealth24-7-backprocesosmedicos-1.onrender.com/api/citas',
+    );
     try {
       final respuesta = await http.get(url);
       if (respuesta.statusCode == 200) {
@@ -33,50 +78,92 @@ class _VerCitasAdminPageState extends State<VerCitasAdminPage> {
         setState(() => cargando = false);
       }
     } catch (e) {
-      setState(() => cargando = false);
+      if (mounted) setState(() => cargando = false);
     }
   }
+
 
   void mostrarDetallesCita(Map<String, dynamic> cita) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: AppColors.white, // 
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          "Cita #${cita['idCita']} - ${cita['estadoCita']}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          "Cita #${cita['idCita']}",
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.keppel,
+            fontSize: 20,
+          ), // 
         ),
         content: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("👩‍⚕️ Médico: ${cita['nombreMedico']}"),
-              Text("🧍 Paciente: ${cita['nombrePaciente']}"),
-              Text("💬 Motivo: ${cita['motivo']}"),
-              Text("🤒 Síntomas: ${cita['sintomas']}"),
+              _estadoChip(cita['estadoCita']), 
+              const SizedBox(height: 10),
+              _infoItem("👩‍⚕️ Médico:", cita['nombreMedico']),
+              _infoItem("🧍 Paciente:", cita['nombrePaciente']),
+              _infoItem("💬 Motivo:", cita['motivo']),
+              _infoItem("🤒 Síntomas:", cita['sintomas']),
               if (cita['observaciones'] != null)
-                Text("📝 Observaciones: ${cita['observaciones']}"),
-              const SizedBox(height: 10),
-              Text("🏥 Servicio: ${cita['nombreServicio']}"),
-              Text("📚 Especialidad: ${cita['nombreEspecialidad']}"),
-              Text("📍 Sede: ${cita['nombreSede']}"),
-              const SizedBox(height: 10),
-              Text("📅 Fecha: ${cita['fechaHora'].toString().split('T')[0]}"),
-              Text("⏰ Hora: ${cita['fechaHora'].toString().split('T')[1].substring(0,5)}"),
-              const SizedBox(height: 10),
-              Text("🕓 Creada el: ${cita['fechaCreacion'].toString().split('T')[0]}"),
+                _infoItem("📝 Observaciones:", cita['observaciones']),
+              const Divider(height: 20),
+              _infoItem("🏥 Servicio:", cita['nombreServicio']),
+              _infoItem("📚 Especialidad:", cita['nombreEspecialidad']),
+              _infoItem("📍 Sede:", cita['nombreSede']),
+              const Divider(height: 20),
+              _infoItem(
+                "📅 Fecha:",
+                cita['fechaHora'].toString().split('T')[0],
+              ),
+              _infoItem(
+                "⏰ Hora:",
+                cita['fechaHora'].toString().split('T')[1].substring(0, 5),
+              ),
+              _infoItem(
+                "🕓 Creada el:",
+                cita['fechaCreacion'].toString().split('T')[0],
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine, // 🎨 Color
+              foregroundColor: AppColors.paynesGray, // 🎨 Color
+            ),
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar", style: TextStyle(color: Colors.teal)),
+            child: const Text(
+              "Cerrar",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _infoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: RichText(
+        text: TextSpan(
+          style: AppTextStyles.body.copyWith(fontSize: 14), // 
+          children: [
+            TextSpan(
+              text: "$label ",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _estadoChip(String estado) {
     Color color;
@@ -94,7 +181,13 @@ class _VerCitasAdminPageState extends State<VerCitasAdminPage> {
         color = Colors.grey;
     }
     return Chip(
-      label: Text(estado, style: const TextStyle(color: Colors.white)),
+      label: Text(
+        estado,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       backgroundColor: color,
     );
   }
@@ -102,102 +195,134 @@ class _VerCitasAdminPageState extends State<VerCitasAdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.celeste, //
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          "Todas las Citas",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent, // 
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.paynesGray,
+          ), //
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        title: Text(
+          "Todas las Citas",
+          style: AppTextStyles.headline.copyWith(fontSize: 20), 
+        ),
+        centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          // 📌 Fondo con imagen
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/Fondo.png",
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-
-          // 📌 Contenido principal
-          cargando
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFF01A4B2)))
+        ),
+        child: SafeArea(
+    
+          child: cargando
+              ? Center(
+                  
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.aquamarine),
+                      SizedBox(height: 16),
+                      Text(
+                        "Cargando todas las citas...",
+                        style: AppTextStyles.body,
+                      ),
+                    ],
+                  ),
+                )
               : citas.isEmpty
-              ? const Center(
-            child: Text(
-              "No hay citas registradas",
-              style: TextStyle(color: Colors.black54, fontSize: 16),
-            ),
-          )
-              : Column(
-            children: [
-              const SizedBox(height: 160),
-              Expanded(
-                child: Transform.translate(
-                  offset: const Offset(0, -50),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: Offset(0, 4),
+              ? Center(
+               
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_outlined,
+                        size: 60,
+                        color: AppColors.paynesGray.withOpacity(0.3),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "No hay citas registradas",
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.paynesGray.withOpacity(0.7),
                         ),
-                      ],
-                    ),
-                    child: ListView.builder(
-                      itemCount: citas.length,
-                      itemBuilder: (context, index) {
-                        final cita = citas[index];
-                        return Card(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFF01A4B2),
-                              child: Text(
-                                cita['nombrePaciente'][0],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            title: Text(
-                              cita['nombrePaciente'],
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: citas.length,
+                  itemBuilder: (context, i) {
+                    final cita = citas[i];
+                    
+                    return Card(
+                      color: AppColors.white.withOpacity(0.7), // 🎨 Color
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.keppel.withOpacity(
+                            0.1,
+                          ), 
+                          child: Text(
+                            cita['nombrePaciente'][0],
+                            style: const TextStyle(
+                              color: AppColors.keppel,
+                              fontWeight: FontWeight.bold,
+                            ), 
+                          ),
+                        ),
+                        title: Text(
+                          cita['nombrePaciente'],
+                          style: AppTextStyles.cardTitle.copyWith(
+                            color: AppColors.paynesGray,
+                          ), 
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Médico: ${cita['nombreMedico']}",
+                              style: AppTextStyles.cardDescription,
+                            ), 
+                            Text(
+                              "Servicio: ${cita['nombreServicio']}",
+                              style: AppTextStyles.cardDescription,
+                            ), 
+                            Row(
                               children: [
-                                Text("Médico: ${cita['nombreMedico']}"),
-                                Text("Servicio: ${cita['nombreServicio']}"),
-                                Row(
-                                  children: [
-                                    const Text("Estado: "),
-                                    _estadoChip(cita['estadoCita']),
-                                  ],
-                                ),
+                                Text(
+                                  "Estado: ",
+                                  style: AppTextStyles.cardDescription,
+                                ), 
+                                _estadoChip(cita['estadoCita']),
                               ],
                             ),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-                            onTap: () => mostrarDetallesCita(cita),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                          ],
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 18,
+                          color: AppColors.keppel,
+                        ), 
+                        onTap: () => mostrarDetallesCita(cita),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

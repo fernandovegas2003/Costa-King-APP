@@ -4,6 +4,47 @@ import 'package:http/http.dart' as http;
 import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.keppel,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 13,
+    fontFamily: _fontFamily,
+  );
+}
+
 class DiagnosticoAlternativaPage extends StatefulWidget {
   final List<String> sintomas;
   final int duracionDias;
@@ -37,23 +78,29 @@ class _DiagnosticoAlternativaPageState
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFDAA520)),
-              SizedBox(width: 8),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange[800],
+              ),
+              const SizedBox(width: 8),
               Text(
                 "Aviso Importante",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: AppTextStyles.headline.copyWith(
+                  fontSize: 20,
+                ),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             "Este diagnóstico es orientativo y no sustituye la valoración médica profesional. "
-                "Si los síntomas persisten o empeoran, consulta a un especialista.",
-            style: TextStyle(fontSize: 15),
+            "Si los síntomas persisten o empeoran, consulta a un especialista.",
+            style: AppTextStyles.body.copyWith(fontSize: 15),
           ),
           actions: [
             TextButton(
@@ -65,13 +112,17 @@ class _DiagnosticoAlternativaPageState
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF006D73),
+                backgroundColor: AppColors.aquamarine,
+                foregroundColor: AppColors.paynesGray,
               ),
               onPressed: () {
                 Navigator.pop(context);
                 _consultarDiagnostico();
               },
-              child: const Text("Entendido"),
+              child: const Text(
+                "Entendido",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -83,7 +134,6 @@ class _DiagnosticoAlternativaPageState
     setState(() {
       cargando = true;
     });
-
     try {
       final response = await http.post(
         Uri.parse("http://20.251.169.101:5007/api/medicina-alternativa"),
@@ -93,7 +143,6 @@ class _DiagnosticoAlternativaPageState
           "duracion_dias": widget.duracionDias,
         }),
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data["success"] == true && data["data"] != null) {
@@ -108,7 +157,10 @@ class _DiagnosticoAlternativaPageState
     } catch (e) {
       debugPrint("Error en diagnóstico: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al consultar el diagnóstico: $e")),
+        SnackBar(
+          content: Text("Error al consultar el diagnóstico: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => cargando = false);
@@ -118,65 +170,129 @@ class _DiagnosticoAlternativaPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FDFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Navbar
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            // 🔹 Header elegante
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF2E7D32),
-                    const Color(0xFF4CAF50),
-                  ],
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.keppel,
+                      AppColors.paynesGray,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25),
+                    bottomRight: Radius.circular(25),
+                  ),
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(25),
-                  bottomRight: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.eco,
+                            color: AppColors.white,
+                            size: 30,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.eco,
-                          color: Colors.white,
-                          size: 30,
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Diagnóstico Natural",
+                                style: AppTextStyles.headline.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              Text(
+                                "Remedios basados en medicina alternativa",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Medicina Tradicional y Natural",
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 15),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (mostrarContenido && diagnostico != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: AppColors.keppel.withOpacity(0.1),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.medical_services,
+                        color: AppColors.keppel,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Diagnóstico Natural",
-                              style: TextStyle(
-                                fontSize: 20,
+                              "Análisis completado",
+                              style: AppTextStyles.body.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.keppel,
+                                fontSize: 14,
                               ),
                             ),
                             Text(
-                              "Remedios basados en medicina alternativa",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
+                              "${widget.sintomas.length} síntomas • ${widget.duracionDias} días",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.keppel,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -184,120 +300,65 @@ class _DiagnosticoAlternativaPageState
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Medicina Tradicional y Natural",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            // 🔹 Resumen rápido
-            if (mostrarContenido && diagnostico != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Colors.green[50],
-                child: Row(
-                  children: [
-                    Icon(Icons.medical_services, color: Color(0xFF2E7D32), size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Análisis completado",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E7D32),
-                              fontSize: 14,
+              Expanded(
+                child: cargando
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.aquamarine,
+                              ),
                             ),
-                          ),
-                          Text(
-                            "${widget.sintomas.length} síntomas • ${widget.duracionDias} días",
-                            style: TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontSize: 12,
+                            SizedBox(height: 16),
+                            Text(
+                              "Analizando tus síntomas...",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.paynesGray,
+                              ),
                             ),
+                          ],
+                        ),
+                      )
+                    : !mostrarContenido
+                    ? Center(
+                        child: Text(
+                          "Preparando diagnóstico...",
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.paynesGray.withOpacity(0.7),
                           ),
-                        ],
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _buildAdvertencias(),
+                            const SizedBox(height: 20),
+                            _buildEvaluacionInicial(),
+                            const SizedBox(height: 20),
+                            _buildRemediosPrincipales(),
+                            const SizedBox(height: 20),
+                            _buildRecomendacionesGenerales(),
+                            const SizedBox(height: 20),
+                            _buildSeguimiento(),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
               ),
 
-            // 🔹 Contenido principal
-            Expanded(
-              child: cargando
-                  ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      "Analizando tus síntomas...",
-                      style: TextStyle(
-                        color: Color(0xFF2E7D32),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : !mostrarContenido
-                  ? const Center(
-                child: Text(
-                  "Preparando diagnóstico...",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-                ),
-              )
-                  : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildAdvertencias(),
-                    const SizedBox(height: 20),
-                    _buildEvaluacionInicial(),
-                    const SizedBox(height: 20),
-                    _buildRemediosPrincipales(),
-                    const SizedBox(height: 20),
-                    _buildRecomendacionesGenerales(),
-                    const SizedBox(height: 20),
-                    _buildSeguimiento(),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() => _selectedIndex = index);
+                },
               ),
-            ),
-
-            // 🔹 Footer
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() => _selectedIndex = index);
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -314,25 +375,21 @@ class _DiagnosticoAlternativaPageState
         color: const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFEF3C7)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange[800], size: 24),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange[800],
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(
                 "Advertencias Importantes",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.headline.copyWith(
                   color: Colors.orange[800],
                   fontSize: 16,
                 ),
@@ -340,29 +397,58 @@ class _DiagnosticoAlternativaPageState
             ],
           ),
           const SizedBox(height: 12),
-          ...advertencias.map((e) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.circle, size: 6, color: Colors.orange[800]),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    e,
-                    style: TextStyle(
-                      color: Colors.orange[800],
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
+          ...advertencias
+              .map(
+                (e) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.circle, size: 6, color: Colors.orange[800]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          e,
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.orange[800],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          )).toList(),
+              )
+              .toList(),
         ],
       ),
     );
+  }
+
+  Color _getUrgenciaColor(String? nivel) {
+    switch (nivel?.toLowerCase()) {
+      case 'alto':
+        return Colors.red;
+      case 'medio':
+        return Colors.orange;
+      case 'bajo':
+        return AppColors.keppel;
+      default:
+        return AppColors.paynesGray;
+    }
+  }
+
+  IconData _getUrgenciaIcon(String? nivel) {
+    switch (nivel?.toLowerCase()) {
+      case 'alto':
+        return Icons.priority_high;
+      case 'medio':
+        return Icons.warning;
+      case 'bajo':
+        return Icons.check_circle;
+      default:
+        return Icons.help;
+    }
   }
 
   Widget _buildEvaluacionInicial() {
@@ -374,47 +460,38 @@ class _DiagnosticoAlternativaPageState
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.assessment, color: Color(0xFF2E7D32), size: 24),
+              Icon(
+                Icons.assessment,
+                color: AppColors.keppel,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(
                 "Evaluación Inicial",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
-                ),
+                style: AppTextStyles.cardTitle,
               ),
             ],
           ),
           const SizedBox(height: 16),
-
           _buildInfoRow("📅 Duración", "${evaluacion["duracion_dias"]} días"),
           const SizedBox(height: 8),
-
-          _buildInfoRow("🔍 Síntomas analizados", sintomas.join(", ")),
+          _buildInfoRow("🔍 Síntomas", sintomas.join(", ")),
           const SizedBox(height: 12),
-
-          // Nivel de urgencia
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _getUrgenciaColor(urgencia["nivel"]?.toString()),
+              color: _getUrgenciaColor(
+                urgencia["nivel"]?.toString(),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -431,17 +508,17 @@ class _DiagnosticoAlternativaPageState
                     children: [
                       Text(
                         "Nivel de urgencia: ${urgencia["nivel"]?.toString().toUpperCase()}",
-                        style: TextStyle(
+                        style: AppTextStyles.body.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 14,
                         ),
                       ),
                       if (urgencia["mensaje"] != null)
                         Text(
                           urgencia["mensaje"],
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.white.withOpacity(0.9),
                             fontSize: 12,
                           ),
                         ),
@@ -461,12 +538,12 @@ class _DiagnosticoAlternativaPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 120,
+          width: 100,
           child: Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.body.copyWith(
               fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              color: AppColors.paynesGray.withOpacity(0.7),
               fontSize: 14,
             ),
           ),
@@ -474,8 +551,8 @@ class _DiagnosticoAlternativaPageState
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              color: Color(0xFF2E7D32),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.paynesGray,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -483,32 +560,6 @@ class _DiagnosticoAlternativaPageState
         ),
       ],
     );
-  }
-
-  Color _getUrgenciaColor(String? nivel) {
-    switch (nivel?.toLowerCase()) {
-      case 'alto':
-        return Colors.red;
-      case 'medio':
-        return Colors.orange;
-      case 'bajo':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getUrgenciaIcon(String? nivel) {
-    switch (nivel?.toLowerCase()) {
-      case 'alto':
-        return Icons.priority_high;
-      case 'medio':
-        return Icons.warning;
-      case 'bajo':
-        return Icons.check_circle;
-      default:
-        return Icons.help;
-    }
   }
 
   Widget _buildRemediosPrincipales() {
@@ -538,7 +589,9 @@ class _DiagnosticoAlternativaPageState
             subtitle: "Apoyo adicional para tu tratamiento",
           ),
           const SizedBox(height: 16),
-          ...complementarios.map((r) => _buildRemedioCard(r, isPrincipal: false)),
+          ...complementarios.map(
+            (r) => _buildRemedioCard(r, isPrincipal: false),
+          ),
         ],
       ],
     );
@@ -553,19 +606,13 @@ class _DiagnosticoAlternativaPageState
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.white),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Color(0xFF2E7D32), size: 24),
+          Icon(icon, color: AppColors.keppel, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -573,17 +620,12 @@ class _DiagnosticoAlternativaPageState
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
-                  ),
+                  style: AppTextStyles.cardTitle,
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
+                  style: AppTextStyles.cardDescription.copyWith(
+                    color: AppColors.paynesGray.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -594,21 +636,21 @@ class _DiagnosticoAlternativaPageState
     );
   }
 
-  Widget _buildRemedioCard(Map<String, dynamic> remedio, {bool isPrincipal = true}) {
+  Widget _buildRemedioCard(
+    Map<String, dynamic> remedio, {
+    bool isPrincipal = true,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isPrincipal ? Color(0xFFE8F5E8) : Colors.white,
+        color: isPrincipal
+            ? AppColors.white.withOpacity(0.9)
+            : AppColors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
         border: Border.all(
-          color: isPrincipal ? Color(0xFF4CAF50).withOpacity(0.3) : Colors.grey[100]!,
+          color: isPrincipal
+              ? AppColors.keppel.withOpacity(0.3)
+              : AppColors.iceBlue,
         ),
       ),
       child: Padding(
@@ -621,12 +663,12 @@ class _DiagnosticoAlternativaPageState
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Color(0xFF2E7D32).withOpacity(0.1),
+                    color: AppColors.keppel.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.eco,
-                    color: Color(0xFF2E7D32),
+                    color: AppColors.keppel,
                     size: 20,
                   ),
                 ),
@@ -634,31 +676,37 @@ class _DiagnosticoAlternativaPageState
                 Expanded(
                   child: Text(
                     remedio["nombre"] ?? "Remedio Natural",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
-                      fontSize: 16,
-                    ),
+                    style: AppTextStyles.cardTitle,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Chips de información
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildInfoChip("🎯 ${remedio["efectividad"] ?? 'N/A'}", Colors.blue),
-                _buildInfoChip("⏱️ ${remedio["tiempo_efecto"] ?? 'N/A'}", Colors.orange),
+                _buildInfoChip(
+                  "🎯 ${remedio["efectividad"] ?? 'N/A'}",
+                  AppColors.keppel,
+                ),
+                _buildInfoChip(
+                  "⏱️ ${remedio["tiempo_efecto"] ?? 'N/A'}",
+                  AppColors.paynesGray,
+                ),
               ],
             ),
 
             const SizedBox(height: 16),
-            _buildInfoSection("🧪 Ingredientes", List<String>.from(remedio["ingredientes"] ?? [])),
+            _buildInfoSection(
+              "🧪 Ingredientes",
+              List<String>.from(remedio["ingredientes"] ?? []),
+            ),
             const SizedBox(height: 12),
-            _buildInfoSection("📝 Preparación", [remedio["preparacion"] ?? ""], isSingle: true),
+            _buildInfoSection("📝 Preparación", [
+              remedio["preparacion"] ?? "",
+            ], isSingle: true),
           ],
         ),
       ),
@@ -684,33 +732,56 @@ class _DiagnosticoAlternativaPageState
     );
   }
 
-  Widget _buildInfoSection(String title, List<String> items, {bool isSingle = false}) {
+  Widget _buildInfoSection(
+    String title,
+    List<String> items, {
+    bool isSingle = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: AppTextStyles.body.copyWith(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF2E7D32),
-            fontSize: 14,
+            color: AppColors.keppel,
           ),
         ),
         const SizedBox(height: 6),
         if (isSingle)
           Text(
             items.first,
-            style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 13,
-              height: 1.4,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.paynesGray.withOpacity(0.8),
             ),
           )
         else
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Text("• $item"),
-          )).toList(),
+          ...items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "• ",
+                        style: TextStyle(
+                          color: AppColors.paynesGray.withOpacity(0.8),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.paynesGray.withOpacity(0.8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
       ],
     );
   }
@@ -725,52 +796,42 @@ class _DiagnosticoAlternativaPageState
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.recommend, color: Color(0xFF2E7D32), size: 24),
+              Icon(
+                Icons.recommend,
+                color: AppColors.keppel,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(
                 "Recomendaciones Generales",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
-                ),
+                style: AppTextStyles.cardTitle,
               ),
             ],
           ),
           const SizedBox(height: 16),
-
           _buildCategoriaRecomendacion(
             "🍎 Alimentos beneficiosos",
             Icons.restaurant,
-            Colors.green,
+            AppColors.keppel,
             alimentos,
           ),
           const SizedBox(height: 16),
-
           _buildCategoriaRecomendacion(
             "💪 Estilo de vida",
             Icons.fitness_center,
-            Colors.blue,
+            AppColors.paynesGray,
             estilo,
           ),
           const SizedBox(height: 16),
-
           _buildCategoriaRecomendacion(
             "🚫 Hábitos a evitar",
             Icons.block,
@@ -782,7 +843,12 @@ class _DiagnosticoAlternativaPageState
     );
   }
 
-  Widget _buildCategoriaRecomendacion(String titulo, IconData icon, Color color, List<String> items) {
+  Widget _buildCategoriaRecomendacion(
+    String titulo,
+    IconData icon,
+    Color color,
+    List<String> items,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -792,7 +858,7 @@ class _DiagnosticoAlternativaPageState
             const SizedBox(width: 8),
             Text(
               titulo,
-              style: TextStyle(
+              style: AppTextStyles.body.copyWith(
                 fontWeight: FontWeight.w600,
                 color: color,
                 fontSize: 15,
@@ -801,26 +867,29 @@ class _DiagnosticoAlternativaPageState
           ],
         ),
         const SizedBox(height: 8),
-        ...items.map((item) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.circle, size: 6, color: color),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item,
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
+        ...items
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.circle, size: 6, color: color),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.paynesGray.withOpacity(0.8),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        )).toList(),
+            )
+            .toList(),
       ],
     );
   }
@@ -834,47 +903,44 @@ class _DiagnosticoAlternativaPageState
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: AppColors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.timeline, color: Color(0xFF2E7D32), size: 24),
+              Icon(
+                Icons.timeline,
+                color: AppColors.keppel,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(
                 "Seguimiento y Evaluación",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
-                ),
+                style: AppTextStyles.cardTitle,
               ),
             ],
           ),
           const SizedBox(height: 16),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               if (seg["duracion_tratamiento_sugerida"] != null)
-                _buildInfoChip("📅 ${seg["duracion_tratamiento_sugerida"]}", Colors.purple),
+                _buildInfoChip(
+                  "📅 ${seg["duracion_tratamiento_sugerida"]}",
+                  AppColors.paynesGray,
+                ),
               if (seg["frecuencia_evaluacion"] != null)
-                _buildInfoChip("🔄 ${seg["frecuencia_evaluacion"]}", Colors.teal),
+                _buildInfoChip(
+                  "🔄 ${seg["frecuencia_evaluacion"]}",
+                  AppColors.keppel,
+                ),
             ],
           ),
-
           const SizedBox(height: 20),
           _buildCategoriaRecomendacion(
             "🚨 Cuándo buscar ayuda",
@@ -882,12 +948,11 @@ class _DiagnosticoAlternativaPageState
             Colors.red,
             cuando,
           ),
-
           const SizedBox(height: 16),
           _buildCategoriaRecomendacion(
             "📈 Indicadores de mejoría",
             Icons.trending_up,
-            Colors.green,
+            AppColors.keppel,
             indicadores,
           ),
         ],

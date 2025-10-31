@@ -3,9 +3,50 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'RegisterCitas.dart';
-import '../Citas/PrincipalCitas.dart'; // 👈 Paciente
-import '../Admin/PrincipalAdmin.dart'; // 👈 Administrador
-import '../Doctor/AgendaDoctor.dart';  // 👈 Doctor
+import '../Citas/PrincipalCitas.dart'; 
+import '../Admin/PrincipalAdmin.dart'; 
+import '../Doctor/AgendaDoctor.dart'; 
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily =
+      'TuFuenteApp'; 
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle button = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle link = TextStyle(
+    color: AppColors.keppel, 
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -18,6 +59,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _pwdController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false; 
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -36,6 +78,8 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
+      if (!mounted) return; 
+
       setState(() => _isLoading = false);
 
       if (response.statusCode == 200) {
@@ -48,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
           final idUsuario = usuario["idUsuario"];
           final idRol = usuario["idRol"];
           final rol = usuario["nombreRol"];
-          final numeroDocumento = usuario["numeroDocumento"]; // 👈 Extraemos el número
+          final numeroDocumento = usuario["numeroDocumento"];
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("token", token);
@@ -58,24 +102,29 @@ class _LoginPageState extends State<LoginPage> {
             await prefs.setInt("idPaciente", idUsuario);
           }
 
-          // 🩵 Guardar también el idDoctor si el rol corresponde
           if (rol.toString().toLowerCase() == "doctor" || idRol == 2) {
             await prefs.setInt("idDoctor", idUsuario);
             print("✅ idDoctor guardado: $idUsuario");
           }
 
-          // 🆕 Guardar el número de documento del usuario
-          if (numeroDocumento != null && numeroDocumento.toString().isNotEmpty) {
-            await prefs.setString("numeroDocumento", numeroDocumento.toString());
+          if (numeroDocumento != null &&
+              numeroDocumento.toString().isNotEmpty) {
+            await prefs.setString(
+              "numeroDocumento",
+              numeroDocumento.toString(),
+            );
             print("✅ númeroDocumento guardado: $numeroDocumento");
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Bienvenido ${usuario["nombreUsuario"]}")),
+            SnackBar(
+              content: Text("Bienvenido ${usuario["nombreUsuario"]}"),
+              backgroundColor: AppColors.keppel, 
+            ),
           );
 
-          // 🔄 Redirección según el rol
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (!mounted) return;
             if (idRol == 1 || rol == "Paciente") {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const MenuCitasPage()),
@@ -92,139 +141,194 @@ class _LoginPageState extends State<LoginPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Rol no autorizado o sin acceso definido."),
+                  backgroundColor: Colors.red,
                 ),
               );
             }
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error API: ${data["message"]}")),
+            SnackBar(
+              content: Text("Error API: ${data["message"]}"),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error ${response.statusCode}: ${response.body}")),
+          SnackBar(
+            content: Text("Error ${response.statusCode}: ${response.body}"),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error de conexión: $e")),
-      );
-    }
-  }
-
-  Widget _botonLogin(String texto) {
-    return ElevatedButton(
-      onPressed: _isLoading ? null : _login,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF01A4B2),
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 55),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 3,
-      ),
-      child: _isLoading
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(
-        texto,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _botonRegistrarse() {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const RegisterPage()),
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error de conexión: $e"),
+            backgroundColor: Colors.red,
+          ),
         );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: const Text(
-        "Registrarse",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-    );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset("assets/images/Fondo.png", fit: BoxFit.cover),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Iniciar Sesión",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.5), 
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.paynesGray.withOpacity(
+                            0.1,
+                          ), 
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Iniciar Sesión",
+                          style: AppTextStyles.headline, 
+                        ),
+                        const SizedBox(height: 32),
+                        TextFormField(
+                          controller: _emailController,
+                          style: AppTextStyles.body, 
+                          decoration: InputDecoration(
+                            labelText: 'Correo Electrónico',
+                            labelStyle: AppTextStyles.body.copyWith(
+                              color: AppColors.paynesGray.withOpacity(0.7),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: AppColors.paynesGray,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.white.withOpacity(0.5),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _pwdController,
+                          obscureText: !_isPasswordVisible, 
+                          style: AppTextStyles.body, 
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            labelStyle: AppTextStyles.body.copyWith(
+                              color: AppColors.paynesGray.withOpacity(0.7),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: AppColors.paynesGray,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppColors.paynesGray,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                            filled: true,
+                            fillColor: AppColors.white.withOpacity(0.5),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.aquamarine, 
+                              foregroundColor: AppColors.paynesGray, 
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.paynesGray,
+                                    ),
+                                  )
+                                : Text(
+                                    "Ingresar",
+                                    style: AppTextStyles.button, 
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: "Correo electrónico",
-                      prefixIcon: const Icon(Icons.email),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '¿No tienes cuenta?',
+                        style: AppTextStyles.body, 
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _pwdController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: "Contraseña",
-                      prefixIcon: const Icon(Icons.lock),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Regístrate',
+                          style: AppTextStyles.link, 
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  _botonLogin("Ingresar"),
-                  const SizedBox(height: 10),
-                  _botonRegistrarse(),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

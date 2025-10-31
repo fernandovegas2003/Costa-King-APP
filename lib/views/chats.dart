@@ -1,10 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../componentes/navbar/footer.dart';
 import '../componentes/navbar/navbar.dart';
 import 'ChatBotPage_view.dart';
 import 'PressionPage.dart';
-import 'Sintomas.dart'; // 🔹 Cambiada la importación
+import 'Sintomas.dart';
 import 'SintomasAlternativaPage.dart';
+
+class AppColors {
+  static const Color celeste = Color(0xFFBDFFFD);
+  static const Color iceBlue = Color(0xFF9FFFF5);
+  static const Color aquamarine = Color(0xFF7CFFC4);
+  static const Color keppel = Color(0xFF6ABEA7);
+  static const Color paynesGray = Color(0xFF5E6973);
+  static const Color white = Color(0xFFFFFFFF);
+}
+
+class AppTextStyles {
+  static const String _fontFamily = 'TuFuenteApp';
+
+  static const TextStyle headline = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle body = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontFamily: _fontFamily,
+  );
+  
+  static const TextStyle cardTitle = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: _fontFamily,
+  );
+
+  static const TextStyle cardDescription = TextStyle(
+    color: AppColors.paynesGray,
+    fontSize: 14,
+    height: 1.4,
+    fontFamily: _fontFamily,
+  );
+}
+
 
 class ChatOptionsPage extends StatefulWidget {
   const ChatOptionsPage({super.key});
@@ -19,133 +61,129 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFE),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const CustomNavbar(),
+      backgroundColor: AppColors.celeste,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.iceBlue, AppColors.celeste],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const CustomNavbar(),
 
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Asistente de Salud",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF006D73),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  "Asistente de Salud",
+                  style: AppTextStyles.headline,
                 ),
               ),
-            ),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.medical_services,
-                              size: 50,
-                              color: Color(0xFF006D73),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              "Selecciona el tipo de asistencia que necesitas",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.medical_services,
+                                size: 50,
+                                color: AppColors.aquamarine,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                              const SizedBox(height: 10),
+                              Text(
+                                "Selecciona el tipo de asistencia que necesitas",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.paynesGray.withOpacity(0.8),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // 🔹 Opción 1: Chat General
-                    _buildChatOption(
-                      icon: Icons.chat,
-                      title: "Chat General de Salud",
-                      description: "Conversa con nuestro asistente sobre cualquier tema de salud, síntomas, recomendaciones generales y dudas médicas.",
-                      color: Color(0xFF006D73),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ChatBotPage()),
-                        );
-                      },
-                    ),
+                      _buildChatOption(
+                        icon: Icons.chat,
+                        title: "Chat General de Salud",
+                        description: "Conversa con nuestro asistente sobre cualquier tema de salud, síntomas, recomendaciones generales y dudas médicas.",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ChatBotPage()),
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // 🔹 Opción 2: Análisis de Presión
-                    _buildChatOption(
-                      icon: Icons.monitor_heart,
-                      title: "Análisis de Presión Arterial",
-                      description: "Analiza tus valores de presión arterial y obtén recomendaciones personalizadas, medicamentos y remedios caseros.",
-                      color: Colors.red,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PresionPage()),
-                        );
-                      },
-                    ),
+                      _buildChatOption(
+                        icon: Icons.monitor_heart,
+                        title: "Análisis de Presión Arterial",
+                        description: "Analiza tus valores de presión arterial y obtén recomendaciones personalizadas, medicamentos y remedios caseros.",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PresionPage()),
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // 🔹 Opción 3: Diagnóstico por Síntomas (ACTUALIZADA)
-                    _buildChatOption(
-                      icon: Icons.medical_services,
-                      title: "Diagnóstico por Síntomas",
-                      description: "Selecciona tus síntomas y obtén un diagnóstico preliminar con recomendaciones médicas personalizadas.",
-                      color: Colors.green,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SintomasPage()),
-                        );
-                      },
-                    ),
+                      _buildChatOption(
+                        icon: Icons.medical_services,
+                        title: "Diagnóstico por Síntomas",
+                        description: "Selecciona tus síntomas y obtén un diagnóstico preliminar con recomendaciones médicas personalizadas.",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SintomasPage()),
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-// 🔹 Opción 4: Medicina Alternativa (NUEVA)
-                    _buildChatOption(
-                      icon: Icons.eco,
-                      title: "Medicina Alternativa",
-                      description: "Diagnóstico con remedios naturales basado en tus síntomas y duración.",
-                      color: Colors.green,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SintomasAlternativaPage()),
-                        );
-                      },
-                    ),
+                      _buildChatOption(
+                        icon: Icons.eco,
+                        title: "Medicina Alternativa",
+                        description: "Diagnóstico con remedios naturales basado en tus síntomas y duración.",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SintomasAlternativaPage()),
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            CustomFooterNav(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() => _selectedIndex = index);
-              },
-            ),
-          ],
+              CustomFooterNav(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -155,11 +193,11 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
     required IconData icon,
     required String title,
     required String description,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return Card(
       elevation: 4,
+      color: AppColors.white.withOpacity(0.8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -173,13 +211,13 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: AppColors.keppel.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
                   size: 30,
-                  color: color,
+                  color: AppColors.keppel,
                 ),
               ),
               const SizedBox(width: 16),
@@ -189,19 +227,13 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+                      style: AppTextStyles.cardTitle,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        height: 1.4,
+                      style: AppTextStyles.cardDescription.copyWith(
+                        color: AppColors.paynesGray.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -210,7 +242,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Colors.grey[400],
+                color: AppColors.keppel.withOpacity(0.7),
               ),
             ],
           ),
@@ -223,12 +255,18 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("Próximamente", style: TextStyle(color: Color(0xFF006D73))),
-        content: Text("Esta funcionalidad estará disponible muy pronto."),
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text("Próximamente", style: AppTextStyles.headline.copyWith(fontSize: 20)),
+        content: Text("Esta funcionalidad estará disponible muy pronto.", style: AppTextStyles.body),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.aquamarine,
+              foregroundColor: AppColors.paynesGray,
+            ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text("Entendido", style: TextStyle(color: Color(0xFF006D73))),
+            child: const Text("Entendido", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

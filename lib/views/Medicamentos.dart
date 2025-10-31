@@ -18,10 +18,8 @@ class MedicamentosPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔹 Navbar
             const CustomNavbar(),
 
-            // 🔹 Header con estilo farmacia
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -60,7 +58,7 @@ class MedicamentosPage extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               "Medicamentos Recomendados",
                               style: TextStyle(
                                 fontSize: 20,
@@ -87,7 +85,7 @@ class MedicamentosPage extends StatelessWidget {
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
+                    child: const Text(
                       "Consulta Farmacéutica Especializada",
                       style: TextStyle(
                         color: Colors.white,
@@ -100,19 +98,16 @@ class MedicamentosPage extends StatelessWidget {
               ),
             ),
 
-            // 🔹 Contenido principal
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 🔹 Tarjeta de advertencia
                     if (medicamentos['advertencia'] != null)
                       _buildAdvertenciaCard(),
 
                     const SizedBox(height: 20),
 
-                    // 🔹 Sección de comparativa
                     if (comparativa.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +124,6 @@ class MedicamentosPage extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // 🔹 Sección de medicamentos recomendados
                     if (recomendados.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,11 +142,9 @@ class MedicamentosPage extends StatelessWidget {
               ),
             ),
 
-            // 🔹 Footer
             CustomFooterNav(
               currentIndex: _selectedIndex,
               onTap: (index) {
-                // La navegación ya está manejada en el CustomFooterNav
               },
             ),
           ],
@@ -229,8 +221,8 @@ class MedicamentosPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
+          const Icon(
+            Icons.compare,
             color: Color(0xFF006D73),
             size: 24,
           ),
@@ -241,7 +233,7 @@ class MedicamentosPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF006D73),
@@ -281,10 +273,10 @@ class MedicamentosPage extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Color(0xFF006D73).withOpacity(0.1),
+            color: const Color(0xFF006D73).withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.analytics,
             color: Color(0xFF006D73),
             size: 20,
@@ -292,7 +284,7 @@ class MedicamentosPage extends StatelessWidget {
         ),
         title: Text(
           item['clase'] ?? "Clase terapéutica",
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF006D73),
             fontSize: 16,
@@ -353,16 +345,15 @@ class MedicamentosPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Header de la clase
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Color(0xFF006D73).withOpacity(0.1),
+                  color: const Color(0xFF006D73).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.medication_liquid,
                   color: Color(0xFF006D73),
                   size: 20,
@@ -372,7 +363,7 @@ class MedicamentosPage extends StatelessWidget {
               Expanded(
                 child: Text(
                   item['clase'] ?? "Medicamento",
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF006D73),
@@ -382,7 +373,6 @@ class MedicamentosPage extends StatelessWidget {
             ],
           ),
 
-          // 🔹 Nota adicional
           if (item['nota'] != null) ...[
             const SizedBox(height: 12),
             Container(
@@ -410,10 +400,9 @@ class MedicamentosPage extends StatelessWidget {
             ),
           ],
 
-          // 🔹 Combinaciones
           if (combinaciones.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text(
+            const Text(
               "💊 Opciones de Combinación",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -429,13 +418,13 @@ class MedicamentosPage extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Color(0xFF00A5A5).withOpacity(0.1),
+                    color: const Color(0xFF00A5A5).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Color(0xFF00A5A5).withOpacity(0.3)),
+                    border: Border.all(color: const Color(0xFF00A5A5).withOpacity(0.3)),
                   ),
                   child: Text(
                     c,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color(0xFF006D73),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -446,10 +435,9 @@ class MedicamentosPage extends StatelessWidget {
             ),
           ],
 
-          // 🔹 Ejemplos
           if (ejemplos.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text(
+            const Text(
               "📋 Ejemplos Comerciales",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -468,7 +456,7 @@ class MedicamentosPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.medical_services, color: Color(0xFF006D73), size: 16),
+                    const Icon(Icons.medical_services, color: Color(0xFF006D73), size: 16),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -476,7 +464,7 @@ class MedicamentosPage extends StatelessWidget {
                         children: [
                           Text(
                             e['nombre'] ?? "",
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF006D73),
                               fontSize: 14,
@@ -517,7 +505,7 @@ class MedicamentosPage extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF006D73),
             fontSize: 14,
             fontWeight: FontWeight.w500,

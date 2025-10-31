@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-// 👇 Importa la nueva pantalla con las opciones de cita
+
 import '../Citas/registroPac.dart';
 
 class VerCitasScreen extends StatefulWidget {
@@ -72,7 +72,7 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
       ),
       body: Stack(
         children: [
-          // 📌 Fondo
+       
           Positioned.fill(
             child: Image.asset(
               "assets/images/Fondo.png",
@@ -80,7 +80,6 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
             ),
           ),
 
-          // 📌 Contenedor principal
           Column(
             children: [
               const SizedBox(height: 160),
@@ -125,7 +124,6 @@ class _VerCitasScreenState extends State<VerCitasScreen> {
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(15),
 
-                            // ✅ Al dar click se guarda el idCita y se abre la nueva pantalla
                             onTap: () async {
                               final prefs = await SharedPreferences.getInstance();
                               await prefs.setInt("idCita", cita["idCita"]);

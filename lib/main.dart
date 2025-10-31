@@ -15,7 +15,6 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ⚠️ SOLO para desarrollo: permite certificados autofirmados
   HttpOverrides.global = MyHttpOverrides();
 
   runApp(
@@ -25,7 +24,6 @@ void main() async {
     ),
   );
 }
-
 
 
 class MyApp extends StatefulWidget {
@@ -56,29 +54,29 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.paused:
-        print('⏸️ App en background');
+        print('App en background');
         break;
       case AppLifecycleState.resumed:
-        print('▶️ App en foreground');
+        print('App en foreground');
         break;
       case AppLifecycleState.detached:
-        print('🚪 App cerrada - Limpiando sesión...');
+        print('App cerrada - Limpiando sesión...');
         authService.clearSessionOnExit();
         break;
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.hidden:
-        print('🙈 App oculta pero aún activa');
+        print('App oculta pero aún activa');
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'BlessHealth24',
-      home: const SplashScreen(),
+      title: 'Costa King App',
+      home: SplashScreen(),
     );
   }
 }
