@@ -13,7 +13,7 @@
 
 
     <application
-        android:label="bless_health24"
+        android:label="COSTA KING APP"
         android:name="${applicationName}"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher">
